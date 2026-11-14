@@ -166,4 +166,7 @@ Orbital propagation by [satellite.js](https://github.com/shashwatak/satellite-js
 [CelesTrak](https://celestrak.org). Space-weather events from NASA's
 [DONKI](https://kauai.ccmc.gsfc.nasa.gov/DONKI/). Built for NASA Space Apps 2026.
 
+Display face: **Chakra Petch** by Cadson Demak, [SIL Open Font License 1.1](src/assets/fonts/OFL.txt).
+Self-hosted so the app keeps its typography offline.
+
 Not affiliated with NASA. An educational model, not a flight prediction or an operational tool.
