@@ -28,6 +28,10 @@ const days = Number(argValue('--days', '30'));
 const norad = argValue('--norad', '40697');
 const apiKey = process.env.NASA_API_KEY || 'DEMO_KEY';
 
+/** Snapshot files are committed, so a personal key must never be written into them. */
+const publicUrl = (url) =>
+  url.replace(/api_key=[^&]*/, `api_key=${apiKey === 'DEMO_KEY' ? 'DEMO_KEY' : 'REDACTED'}`);
+
 const iso = (d) => d.toISOString().slice(0, 10);
 const endDate = iso(new Date());
 const startDate = iso(new Date(Date.now() - days * 86_400_000));
@@ -61,7 +65,7 @@ for (const source of sources) {
     const payload = await response.json();
     await writeFile(
       join(outDir, source.file),
-      JSON.stringify({ fetchedAtUtc, sourceUrl: source.url, payload }, null, 2) + '\n',
+      JSON.stringify({ fetchedAtUtc, sourceUrl: publicUrl(source.url), payload }, null, 2) + '\n',
       'utf8',
     );
     console.log(`ok    ${source.file} (${JSON.stringify(payload).length} bytes)`);
@@ -69,7 +73,7 @@ for (const source of sources) {
     const message = error instanceof Error ? error.message : String(error);
     await writeFile(
       join(outDir, source.file),
-      JSON.stringify({ fetchedAtUtc, sourceUrl: source.url, payload: null, error: message }, null, 2) + '\n',
+      JSON.stringify({ fetchedAtUtc, sourceUrl: publicUrl(source.url), payload: null, error: message }, null, 2) + '\n',
       'utf8',
     );
     console.warn(`error ${source.file}: ${message}`);

@@ -3,7 +3,7 @@
  *
  * Units are carried in the field names (kg, W, Wh, Mb, kbps, deg, s).
  * All game-facing numbers are educational assumptions, not flight predictions.
- * See docs/ASSUMPTIONS.md and the in-app "Model assumptions" panel.
+ * See docs/ASSUMPTIONS.md and the in-app "What is real, what is modelled" panel.
  */
 
 export type Screen = 'briefing' | 'build' | 'operate' | 'debrief';
