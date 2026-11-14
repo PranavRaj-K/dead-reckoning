@@ -144,7 +144,7 @@ two hours later. Then the run is stored so you can change one component and see 
 **On screen**
 - No chart or UI libraries — hand-rolled SVG orbit view, sparklines, CSS
 - No backend, no build-time API calls
-- `base: './'` static bundle: any host, any subdirectory, even `file://`
+- `base: './'` static bundle: any host, any subdirectory
 - Keyboard operable, responsive to ~390 px, reduced-motion respected
 
 **Say (25 s)**

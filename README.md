@@ -137,7 +137,7 @@ scripts/                snapshot refresh tool
 ## Deployment
 
 The build is a static bundle with `base: './'`, so it works at a domain root or any subdirectory on any
-static host — Netlify, Vercel, GitHub Pages, Cloudflare Pages, S3, or a plain `file://` copy of `dist/`.
+static host — Netlify, Vercel, GitHub Pages, Cloudflare Pages, or S3.
 
 ```bash
 npm run build
