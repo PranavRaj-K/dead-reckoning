@@ -10,7 +10,15 @@ function Boot({ error, onRetry }: { error: string | null; onRetry: () => void })
     <div className="boot">
       <div className="boot-orbit" aria-hidden="true">
         <span className="boot-earth" />
-        <span className="boot-sat" />
+        <span className="boot-track">
+          <svg className="boot-sat" viewBox="0 0 26 14">
+            <rect x="9" y="4" width="8" height="6" rx="0.6" fill="#d7e7f4" />
+            <rect x="1" y="5" width="6.5" height="4" rx="0.4" fill="#2f7fa3" />
+            <rect x="18.5" y="5" width="6.5" height="4" rx="0.4" fill="#2f7fa3" />
+            <path d="M7.5 7h1.5M17 7h1.5" stroke="#7e9cbe" strokeWidth="1" />
+            <circle cx="13" cy="7" r="1.2" fill="#ffb648" />
+          </svg>
+        </span>
       </div>
       {error ? (
         <>
