@@ -150,6 +150,16 @@ back to CACHED and still plays.
 
 ---
 
+## Submission materials
+
+| File | What it is |
+| --- | --- |
+| [`DEMO_SCRIPT.md`](DEMO_SCRIPT.md) | 90-second recording script, timed shot by shot |
+| [`SLIDES.md`](SLIDES.md) | Slide-by-slide outline with speaker notes |
+| [`docs/ASSUMPTIONS.md`](docs/ASSUMPTIONS.md) | Every constant and mapping rule the model uses |
+
+---
+
 ## Attribution
 
 Orbital propagation by [satellite.js](https://github.com/shashwatak/satellite-js). Element sets from

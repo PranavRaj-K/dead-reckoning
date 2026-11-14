@@ -222,7 +222,7 @@ export function validateDesign(design: Design, budgets: Budgets): Validation {
     issues.push({
       id: 'downlink',
       severity: 'warning',
-      message: `Estimated downlink capacity is ${throughput} Mb against ${budgets.totalSceneDataMb} Mb of imagery. Expect a data backlog and lost scenes.`,
+      message: `Estimated downlink capacity is ${throughput} MB against ${budgets.totalSceneDataMb} MB of imagery. Expect a data backlog and lost scenes.`,
     });
   }
 
@@ -230,7 +230,7 @@ export function validateDesign(design: Design, budgets: Budgets): Validation {
     issues.push({
       id: 'storage',
       severity: 'warning',
-      message: `Recorder holds ${budgets.storageMb} Mb, about ${Math.floor(budgets.storageMb / Math.max(1, budgets.sceneDataMb))} scenes. Data may overwrite before a pass arrives.`,
+      message: `Recorder holds ${budgets.storageMb} MB, about ${Math.floor(budgets.storageMb / Math.max(1, budgets.sceneDataMb))} scenes. Data may overwrite before a pass arrives.`,
     });
   }
 
@@ -314,7 +314,7 @@ export function clamp(value: number, low: number, high: number): number {
   return Math.min(high, Math.max(low, value));
 }
 
-/** kbps -> Mb per second. */
+/** kbps -> MB per second. */
 export function kbpsToMbPerSec(kbps: number): number {
   return kbps / 8000;
 }

@@ -41,7 +41,7 @@ export function Telemetry({ state }: { state: MissionState }) {
         <Stat
           label="Recorder"
           value={num(state.dataStoredMb, 1)}
-          unit={`/ ${state.budgets.storageMb} Mb`}
+          unit={`/ ${state.budgets.storageMb} MB`}
           tone={state.dataStoredMb > state.budgets.storageMb * 0.9 ? 'bad' : 'idle'}
           hint="Imagery waiting for a pass"
         />
@@ -71,9 +71,9 @@ export function Telemetry({ state }: { state: MissionState }) {
         <Stat
           label="Data delivered"
           value={num(state.dataDeliveredMb, 1)}
-          unit={`/ ${state.dataTargetMb} Mb`}
+          unit={`/ ${state.dataTargetMb} MB`}
           tone={dataRatio >= 1 ? 'ok' : dataRatio >= 0.5 ? 'warn' : 'bad'}
-          hint={`${num(state.dataGeneratedMb, 1)} Mb captured`}
+          hint={`${num(state.dataGeneratedMb, 1)} MB captured`}
         />
       </div>
 
@@ -95,14 +95,14 @@ export function Telemetry({ state }: { state: MissionState }) {
         <div className="spark-block">
           <div className="spark-head">
             <span>Recorder backlog</span>
-            <span className="mono">{num(state.dataStoredMb, 1)} Mb</span>
+            <span className="mono">{num(state.dataStoredMb, 1)} MB</span>
           </div>
           <Sparkline values={storedSeries} min={0} tone="warn" label="Stored data over time" />
         </div>
         <div className="spark-block">
           <div className="spark-head">
             <span>Delivered data</span>
-            <span className="mono">{num(state.dataDeliveredMb, 1)} Mb</span>
+            <span className="mono">{num(state.dataDeliveredMb, 1)} MB</span>
           </div>
           <Sparkline values={deliveredSeries} min={0} tone="ok" label="Delivered data over time" />
         </div>

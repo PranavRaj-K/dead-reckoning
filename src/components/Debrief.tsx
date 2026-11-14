@@ -55,7 +55,7 @@ export function Debrief({
             <div>
               <dt>Data delivered</dt>
               <dd className="mono">
-                {num(result.dataDeliveredMb, 1)} / {result.dataTargetMb} Mb
+                {num(result.dataDeliveredMb, 1)} / {result.dataTargetMb} MB
               </dd>
             </div>
             <div>
@@ -106,8 +106,8 @@ export function Debrief({
             </div>
             <Bar ratio={result.components.data / 100} tone="info" label="Data component" />
             <p className="budget-note">
-              {num(result.dataDeliveredMb, 1)} of {result.dataTargetMb} Mb ·{' '}
-              {num(result.dataGeneratedMb, 1)} Mb captured
+              {num(result.dataDeliveredMb, 1)} of {result.dataTargetMb} MB ·{' '}
+              {num(result.dataGeneratedMb, 1)} MB captured
             </p>
           </div>
           <div className="score-row">
@@ -134,7 +134,7 @@ export function Debrief({
             </div>
             <div>
               <dt>Recorder at close</dt>
-              <dd className="mono">{num(mission.dataStoredMb, 1)} Mb undelivered</dd>
+              <dd className="mono">{num(mission.dataStoredMb, 1)} MB undelivered</dd>
             </div>
             <div>
               <dt>Pointing error</dt>

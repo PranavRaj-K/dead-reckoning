@@ -132,7 +132,7 @@ export function createMission(input: MissionInput): MissionState {
     'design',
     'info',
     `Selected ${instrument.name}`,
-    `${instrument.dataMbPerScene} Mb per scene, ${instrument.scienceValue} science points per scene, rated to ${instrument.maxPointingDeg}° pointing.`,
+    `${instrument.dataMbPerScene} MB per scene, ${instrument.scienceValue} science points per scene, rated to ${instrument.maxPointingDeg}° pointing.`,
   );
   push(
     'design',

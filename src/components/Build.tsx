@@ -14,7 +14,7 @@ import { Bar, Panel, type Tone } from './ui';
 function specLine(spec: ComponentSpec): string {
   switch (spec.slot) {
     case 'bus':
-      return `${spec.storageMb} Mb recorder`;
+      return `${spec.storageMb} MB recorder`;
     case 'power':
       return `${spec.generationW} W peak`;
     case 'battery':
@@ -26,7 +26,7 @@ function specLine(spec: ComponentSpec): string {
     case 'adcs':
       return `${spec.pointingAccuracyDeg}° pointing`;
     case 'instrument':
-      return `${spec.dataMbPerScene} Mb/scene · ${spec.scienceValue} science`;
+      return `${spec.dataMbPerScene} MB/scene · ${spec.scienceValue} science`;
   }
 }
 
@@ -210,7 +210,7 @@ export function Build({
               <div className="budget-head">
                 <span>Estimated downlink</span>
                 <span className="mono">
-                  {num(throughput, 0)} / {num(budgets.totalSceneDataMb, 0)} Mb
+                  {num(throughput, 0)} / {num(budgets.totalSceneDataMb, 0)} MB
                 </span>
               </div>
               <Bar
@@ -219,7 +219,7 @@ export function Build({
                 label="Estimated downlink capacity against imagery volume"
               />
               <p className="budget-note">
-                {num(budgets.downlinkKbps, 1)} kbps effective · {budgets.storageMb} Mb recorder
+                {num(budgets.downlinkKbps, 1)} kbps effective · {budgets.storageMb} MB recorder
               </p>
             </div>
 

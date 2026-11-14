@@ -65,7 +65,7 @@ export function SalvageDialog({
                 </div>
                 <div>
                   <dt>Recorder</dt>
-                  <dd className="mono">{state.dataStoredMb.toFixed(1)} Mb stored</dd>
+                  <dd className="mono">{state.dataStoredMb.toFixed(1)} MB stored</dd>
                 </div>
                 <div>
                   <dt>Science</dt>

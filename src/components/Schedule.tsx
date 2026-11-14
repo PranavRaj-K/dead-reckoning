@@ -86,7 +86,8 @@ export function Schedule({
                   </span>
                   {scene.status === 'stored' || scene.status === 'lost' ? (
                     <span className="scene-meta mono">
-                      q {num(scene.quality, 2)} · {num(scene.scienceDelivered, 1)} sci
+                      q {num(scene.quality, 2)} · {num(scene.scienceDelivered, 1)}/
+                      {num(scene.scienceTotal, 1)} sci sent
                     </span>
                   ) : null}
                   <button
