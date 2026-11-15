@@ -4,6 +4,10 @@ import { POSTURE_RULES, estimatedThroughputMb } from '../sim/resources';
 import type {
   Budgets,
   ComponentSpec,
+  DataSnapshot,
+  GpElements,
+  MissionChoice,
+  OrbitId,
   Design,
   DesignSlot,
   RiskPosture,
@@ -14,6 +18,8 @@ import { SpacecraftPreview } from './SpacecraftPreview';
 import { WebglBoundary } from '../three/WebglBoundary';
 import { isPerfectDesign } from '../sim/perfect';
 import { PerfectPlan } from './PerfectPlan';
+import { MissionSetup } from './MissionSetup';
+import { ownerOf, roleForSlot } from '../sim/crew';
 import { webglAvailable } from '../three/util';
 import { Bar, Panel, type Tone } from './ui';
 
@@ -55,6 +61,10 @@ export function Build({
   onSeed,
   onLaunch,
   onPerfect,
+  orbitData,
+  crew,
+  onMission,
+  onCrew,
 }: {
   design: Design;
   budgets: Budgets;
@@ -66,6 +76,10 @@ export function Build({
   onSeed: (seed: number) => void;
   onLaunch: () => void;
   onPerfect: () => void;
+  orbitData: Record<OrbitId, DataSnapshot<GpElements>>;
+  crew: string[];
+  onMission: (patch: Partial<MissionChoice>) => void;
+  onCrew: (crew: string[]) => void;
 }) {
   const rule = POSTURE_RULES[design.riskPosture];
   const requiredMarginW = budgets.avgLoadW * rule.minEnergyMarginRatio;
@@ -143,6 +157,8 @@ export function Build({
 
           {isPerfectDesign(design, seed) ? <PerfectPlan /> : null}
 
+          <MissionSetup design={design} orbitData={orbitData} crew={crew} onMission={onMission} onCrew={onCrew} />
+
           {/* Narrow screens stack the budgets below every part; this strip keeps them in view. */}
           <div className="budget-hud" aria-label="Live budgets">
             {[
@@ -166,6 +182,7 @@ export function Build({
               <legend>
                 <span className="slot-label">{SLOT_LABELS[slot]}</span>
                 <span className="slot-choice">{componentById(design.ids[slot]).name}</span>
+                {crew.length > 1 ? <span className="owner">{ownerOf(crew, roleForSlot(slot))}</span> : null}
               </legend>
               <div className="parts">
                 {componentsForSlot(slot).map((spec) => {

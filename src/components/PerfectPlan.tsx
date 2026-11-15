@@ -1,11 +1,15 @@
 import { useState } from 'react';
-import { SLOT_LABELS, SLOT_ORDER, componentById } from '../sim/catalogue';
+import { SLOT_LABELS, SLOT_ORDER, componentById, launchById } from '../sim/catalogue';
 import { PERFECT_RUN } from '../sim/perfect';
 import { FAULTS } from '../sim/salvage';
 import { clock } from '../lib/format';
 import type { DesignSlot, FaultId } from '../sim/types';
 
-type Pick = { kind: 'part'; slot: DesignSlot } | { kind: 'extra'; key: 'beacon' | 'posture' } | { kind: 'fault'; id: FaultId };
+type Extra = 'launch' | 'beacon' | 'posture';
+type Pick = { kind: 'part'; slot: DesignSlot } | { kind: 'extra'; key: Extra } | { kind: 'fault'; id: FaultId };
+
+const extraLabel = (key: Extra, design: typeof PERFECT_RUN.design) =>
+  key === 'launch' ? launchById(design.mission.launch).name : key === 'beacon' ? (design.beacon ? 'Backup beacon' : 'No beacon') : `${design.riskPosture} posture`;
 
 /**
  * The Grade S plan, explained. Every choice is a button; the one you pick shows
@@ -20,7 +24,7 @@ export function PerfectPlan() {
       ? { title: `${SLOT_LABELS[pick.slot]}: ${componentById(design.ids[pick.slot]).name}`, why: parts[pick.slot] }
       : pick.kind === 'extra'
         ? {
-            title: pick.key === 'beacon' ? (design.beacon ? 'Backup beacon: fitted' : 'Backup beacon: left off') : `Risk posture: ${design.riskPosture}`,
+            title: pick.key === 'launch' ? `Launch: ${extraLabel('launch', design)}` : pick.key === 'beacon' ? (design.beacon ? 'Backup beacon: fitted' : 'Backup beacon: left off') : `Risk posture: ${design.riskPosture}`,
             why: extras[pick.key],
           }
         : { title: `T+${clock(faultTimes[pick.id])} ${FAULTS[pick.id].title}: ${flight[pick.id].label}`, why: flight[pick.id].why };
@@ -44,9 +48,9 @@ export function PerfectPlan() {
               {componentById(design.ids[slot]).name}
             </button>
           ))}
-          {(['beacon', 'posture'] as const).map((key) => (
+          {(['launch', 'beacon', 'posture'] as const).map((key) => (
             <button key={key} type="button" className={isPicked({ kind: 'extra', key }) ? 'is-open' : ''} onClick={() => setPick({ kind: 'extra', key })}>
-              {key === 'beacon' ? (design.beacon ? 'Backup beacon' : 'No beacon') : `${design.riskPosture} posture`}
+              {extraLabel(key, design)}
             </button>
           ))}
         </div>

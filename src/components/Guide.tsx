@@ -15,6 +15,7 @@ const STEPS: Record<Screen, Step[]> = {
   ],
   build: [
     { targets: ['[data-guide="presets"]'], title: 'Pick a starter design', body: 'Three legal designs, three different bets. Stuck? "Grade S plan" loads the best one and explains every choice.' },
+    { targets: ['[data-guide="mission"]'], title: 'Choose the mission', body: 'Pick a goal, a real orbit and a rocket. Playing together? Set 2–4 players here and each gets a role.' },
     { targets: ['[data-guide="assembly"]'], title: 'Watch it come together', body: 'Every part you choose bolts onto the model. Drag to rotate it.' },
     { targets: ['[data-guide="parts"]'], title: 'Swap parts', body: 'Each card spends mass, money or power. The part you touch is outlined in amber.' },
     { targets: ['.budget-hud', '[data-guide="budgets"]'], title: 'Keep every bar green', body: 'A red bar blocks launch. Fix it by trading a heavier or hungrier part.' },

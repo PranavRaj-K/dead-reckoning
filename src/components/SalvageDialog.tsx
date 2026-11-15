@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { clock } from '../lib/format';
 import { faultCopy, getRecoveryActions } from '../sim/salvage';
 import { PERFECT_RUN, isPerfectRun } from '../sim/perfect';
+import { ownerOf, roleForFault } from '../sim/crew';
 import type { MissionState } from '../sim/types';
 import { Bar, Chip, Info } from './ui';
 
@@ -12,9 +13,11 @@ import { Bar, Chip, Info } from './ui';
 export function SalvageDialog({
   state,
   onResolve,
+  crew = [],
 }: {
   state: MissionState;
   onResolve: (actionId: string) => void;
+  crew?: string[];
 }) {
   const ref = useRef<HTMLDialogElement>(null);
   const pending = state.status === 'awaiting-salvage' && state.activeFault !== null;
@@ -48,6 +51,11 @@ export function SalvageDialog({
             </div>
             <Chip tone="bad">MISSION PAUSED</Chip>
           </header>
+          {faultId && crew.length > 1 ? (
+            <p className="salvage-owner">
+              {roleForFault(faultId).name} call: <strong>{ownerOf(crew, roleForFault(faultId))}</strong> decides, the team advises.
+            </p>
+          ) : null}
 
           <div className="salvage-grid">
             <div>

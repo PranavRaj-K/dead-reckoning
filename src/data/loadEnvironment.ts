@@ -6,18 +6,23 @@
  * report ERROR. The demo works offline without ever implying stale data is live.
  */
 import gpBundle from './snapshots/celestrak-gp.json';
+import issBundle from './snapshots/celestrak-gp-25544.json';
+import landsatBundle from './snapshots/celestrak-gp-49260.json';
 import flrBundle from './snapshots/donki-flr.json';
 import gstBundle from './snapshots/donki-gst.json';
 import sepBundle from './snapshots/donki-sep.json';
-import type { DataSnapshot, GpElements, SpaceWeather } from '../sim/types';
-import { REFERENCE_NORAD_ID } from '../sim/catalogue';
+import type { DataSnapshot, GpElements, OrbitId, SpaceWeather } from '../sim/types';
+import { ORBITS, REFERENCE_NORAD_ID } from '../sim/catalogue';
 import { CELESTRAK_SOURCE, celestrakGpUrl, fetchGp } from './celestrak';
 import { DONKI_SOURCE, fetchWeather } from './nasaDonki';
 import { buildSpaceWeather, normalizeFlares, normalizeGp, normalizeSeps, normalizeStorms } from './normalize';
 import { readCache, writeCache } from './cache';
 
 export interface EnvironmentBundle {
+  /** The default orbit's element set (Sentinel-2A); kept for the badges and briefing. */
   gp: DataSnapshot<GpElements>;
+  /** One real element set per selectable orbit. */
+  orbits: Record<OrbitId, DataSnapshot<GpElements>>;
   weather: DataSnapshot<SpaceWeather>;
   loadedAtUtc: string;
 }
@@ -29,7 +34,7 @@ interface Envelope {
 }
 
 /** Cached entries are re-checked: storage can hold an old format or a hand-edited value. */
-function isGpElements(value: unknown): value is GpElements {
+function isGpElements(value: unknown, noradId: number): value is GpElements {
   const gp = value as GpElements | null;
   return (
     typeof gp === 'object' &&
@@ -37,7 +42,7 @@ function isGpElements(value: unknown): value is GpElements {
     typeof gp.objectName === 'string' &&
     typeof gp.epochUtc === 'string' &&
     Number.isFinite(Date.parse(gp.epochUtc)) &&
-    gp.noradId === REFERENCE_NORAD_ID &&
+    gp.noradId === noradId &&
     gp.meanMotionRevPerDay > 0 &&
     gp.eccentricity >= 0 &&
     gp.eccentricity < 1 &&
@@ -72,9 +77,18 @@ function ageSec(fetchedAtUtc: string): number {
   return (Date.now() - Date.parse(fetchedAtUtc)) / 1000;
 }
 
-function storedGp() {
-  const stored = readCache<unknown>(GP_CACHE_KEY);
-  return stored && isGpElements(stored.payload) ? { fetchedAtUtc: stored.fetchedAtUtc, sourceUrl: stored.sourceUrl, payload: stored.payload } : null;
+/** The default orbit keeps its original cache key so existing caches stay valid. */
+const gpCacheKey = (noradId: number) => (noradId === REFERENCE_NORAD_ID ? GP_CACHE_KEY : `${GP_CACHE_KEY}-${noradId}`);
+
+const GP_BUNDLES: Record<number, Envelope> = {
+  40697: gpBundle as Envelope,
+  25544: issBundle as Envelope,
+  49260: landsatBundle as Envelope,
+};
+
+function storedGp(noradId: number) {
+  const stored = readCache<unknown>(gpCacheKey(noradId));
+  return stored && isGpElements(stored.payload, noradId) ? { fetchedAtUtc: stored.fetchedAtUtc, sourceUrl: stored.sourceUrl, payload: stored.payload } : null;
 }
 
 function storedWeather() {
@@ -97,13 +111,14 @@ function snapshot<T>(
   return { status, sourceName, sourceUrl, fetchedAtUtc, ageSeconds, payload, error };
 }
 
-function bundledGp(): { fetchedAtUtc: string; sourceUrl: string; payload: GpElements } | null {
-  const envelope = gpBundle as Envelope;
+function bundledGp(noradId: number): { fetchedAtUtc: string; sourceUrl: string; payload: GpElements } | null {
+  const envelope = GP_BUNDLES[noradId];
+  if (!envelope) return null;
   try {
     return {
       fetchedAtUtc: envelope.fetchedAtUtc,
       sourceUrl: envelope.sourceUrl,
-      payload: normalizeGp(envelope.payload, REFERENCE_NORAD_ID),
+      payload: normalizeGp(envelope.payload, noradId),
     };
   } catch {
     return null;
@@ -138,20 +153,21 @@ function newerOf<T>(
   return Date.parse(a.fetchedAtUtc) >= Date.parse(b.fetchedAtUtc) ? a : b;
 }
 
-async function loadGp(): Promise<DataSnapshot<GpElements>> {
-  const url = celestrakGpUrl(REFERENCE_NORAD_ID);
-  const recent = storedGp();
+async function loadGp(noradId: number): Promise<DataSnapshot<GpElements>> {
+  const url = celestrakGpUrl(noradId);
+  const recent = storedGp(noradId);
   if (recent && ageSec(recent.fetchedAtUtc) < GP_REUSE_SEC) {
     return snapshot('cached', CELESTRAK_SOURCE, recent.sourceUrl, recent.fetchedAtUtc, recent.payload, 'Reusing the live copy from under 2 hours ago. CelesTrak updates every 2 hours and blocks faster re-downloads.');
   }
   try {
-    const elements = await fetchGp(REFERENCE_NORAD_ID);
+    const elements = await fetchGp(noradId);
+    if (elements.noradId !== noradId) throw new Error(`CelesTrak returned NORAD ${elements.noradId}, not ${noradId}`);
     const fetchedAtUtc = new Date().toISOString();
-    writeCache<GpElements>(GP_CACHE_KEY, { fetchedAtUtc, sourceUrl: url, payload: elements });
+    writeCache<GpElements>(gpCacheKey(noradId), { fetchedAtUtc, sourceUrl: url, payload: elements });
     return snapshot('live', CELESTRAK_SOURCE, url, fetchedAtUtc, elements);
   } catch (error) {
     const reason = error instanceof Error ? error.message : String(error);
-    const chosen = newerOf(storedGp(), bundledGp());
+    const chosen = newerOf(storedGp(noradId), bundledGp(noradId));
     if (chosen) {
       return snapshot('cached', CELESTRAK_SOURCE, chosen.sourceUrl, chosen.fetchedAtUtc, chosen.payload, `Live fetch failed (${reason}). Using a stored snapshot.`);
     }
@@ -193,11 +209,10 @@ let inFlight: Promise<EnvironmentBundle> | null = null;
 /** Loads once per page load; repeated callers share the same promise. */
 export function loadEnvironment(): Promise<EnvironmentBundle> {
   if (!inFlight) {
-    inFlight = Promise.all([loadGp(), loadWeather()]).then(([gp, weather]) => ({
-      gp,
-      weather,
-      loadedAtUtc: new Date().toISOString(),
-    }));
+    inFlight = Promise.all([Promise.all(ORBITS.map((orbit) => loadGp(orbit.noradId))), loadWeather()]).then(([gps, weather]) => {
+      const orbits = Object.fromEntries(ORBITS.map((orbit, i) => [orbit.id, gps[i]])) as Record<OrbitId, DataSnapshot<GpElements>>;
+      return { gp: orbits[ORBITS[0].id], orbits, weather, loadedAtUtc: new Date().toISOString() };
+    });
   }
   return inFlight;
 }
@@ -208,9 +223,9 @@ export function resetEnvironment(): void {
 }
 
 /** Text lines used by the briefing and the debrief. Never claims stale data is live. */
-export function provenanceLines(bundle: EnvironmentBundle): string[] {
+export function provenanceLines(bundle: EnvironmentBundle, orbit?: OrbitId): string[] {
   const lines: string[] = [];
-  const gp = bundle.gp;
+  const gp = (orbit && bundle.orbits?.[orbit]) || bundle.gp;
   lines.push(
     gp.payload
       ? `${CELESTRAK_SOURCE}: ${gp.payload.objectName} (NORAD ${gp.payload.noradId}), element epoch ${gp.payload.epochUtc}. Snapshot ${gp.status.toUpperCase()}, fetched ${gp.fetchedAtUtc}.`

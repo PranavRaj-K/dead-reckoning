@@ -41,9 +41,12 @@ No environment file is needed. To supply your own keys, copy `.env.example` to `
 ## How a run works
 
 1. **Brief** — the mission, the data provenance, and what is real versus modelled.
-2. **Design** — seven component slots, a backup beacon, and a risk posture. Mass, cost, panel power,
-   eclipse battery, downlink throughput and pointing all update as you change parts. A design that
-   exceeds the limits cannot be launched.
+2. **Design** — first the mission: an objective (imaging survey, wide-area mapping, precision science),
+   one of three real orbits (Sentinel-2A, NASA/USGS Landsat 9, the ISS) and a launch (rideshare, station
+   deploy, dedicated launcher) that sets the mass limit and spends from the budget. Play solo or as a team
+   of up to four, each owning part of the spacecraft and its fault. Then seven component slots, a backup
+   beacon and a risk posture. Mass, cost, panel power, eclipse battery, downlink and pointing all update
+   live, and every part bolts onto a 3D model. A design that exceeds the limits cannot be launched.
 3. **Fly** — a six-hour mission at 60×, 300× or 900× speed. Twelve observation windows, real ground-station
    passes, a live flight log. Three faults fire on a fixed timeline and pause the clock; each offers
    two or more recovery paths whose preconditions are checked against the design you actually built.

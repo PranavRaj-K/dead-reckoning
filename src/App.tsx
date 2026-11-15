@@ -93,6 +93,10 @@ function App() {
             onSeed={game.setSeed}
             onPerfect={game.loadPerfect}
             onLaunch={game.launch}
+            orbitData={game.env.orbits}
+            crew={game.crew}
+            onMission={game.setMissionChoice}
+            onCrew={game.setCrew}
           />
         ) : null}
 
@@ -106,6 +110,7 @@ function App() {
             onSkipScene={game.skipScene}
             onResolve={game.salvage}
             onDebrief={() => game.go('debrief')}
+            crew={game.crew}
           />
         ) : null}
 

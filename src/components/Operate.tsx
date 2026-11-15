@@ -57,6 +57,7 @@ export function Operate({
   onSkipScene,
   onResolve,
   onDebrief,
+  crew,
 }: {
   state: MissionState;
   paused: boolean;
@@ -66,6 +67,7 @@ export function Operate({
   onSkipScene: (sceneId: string, skipped: boolean) => void;
   onResolve: (actionId: string) => void;
   onDebrief: () => void;
+  crew: string[];
 }) {
   const [earthSource, setEarthSource] = useState<EarthSource>('loading');
   const [webgl] = useState(webglAvailable);
@@ -178,7 +180,7 @@ export function Operate({
         <Log events={state.causal} />
       </Panel>
 
-      <SalvageDialog state={state} onResolve={onResolve} />
+      <SalvageDialog state={state} onResolve={onResolve} crew={crew} />
     </div>
   );
 }

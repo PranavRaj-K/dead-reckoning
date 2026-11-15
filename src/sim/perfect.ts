@@ -1,7 +1,8 @@
 /**
- * The Grade S plan: the highest-scoring design and recovery sequence for the
- * shipped scenario and default seed, found by simulating every launchable design
- * (1,140) against every recovery combination. A test replays it to keep the
+ * The Grade S plan: the highest-scoring design, launch and recovery sequence for
+ * the default mission (imaging survey from Sentinel-2A's orbit) and default seed,
+ * found by simulating every launchable design on every launch that reaches that
+ * orbit, against every recovery combination. A test replays it to keep the
  * score and grade honest if the model changes.
  */
 import { SCENARIO } from './catalogue';
@@ -11,6 +12,7 @@ import type { Design, DesignSlot, FaultId, MissionState } from './types';
 const SEED = 20_261_115;
 
 const DESIGN: Design = {
+  mission: { objective: 'survey', orbit: 'sso-786', launch: 'dedicated' },
   ids: {
     instrument: 'cam-ms',
     adcs: 'adcs-rw',
@@ -59,10 +61,12 @@ const FLIGHT: Record<FaultId, { actionId: string; label: string; why: string }> 
 
 export const PERFECT_RUN = {
   seed: SEED,
-  score: 96.5,
+  score: 97.4,
   design: DESIGN,
   parts: PARTS,
   extras: {
+    launch:
+      'The dedicated launcher costs $15,000 more than the rideshare but lifts 6 kg instead of 4.5 kg. Mass margin is a third of the resource score, so that headroom is worth more points than the money, and the design still fits the $140,000 budget.',
     beacon:
       'Left off to save 0.05 kg, which is worth a fraction of a point. That only works because the radio reset succeeds on this seed. On any other seed, carry the beacon and switch to it.',
     posture:
@@ -77,6 +81,9 @@ export function isPerfectDesign(design: Design, seed: number): boolean {
     seed === SEED &&
     design.beacon === DESIGN.beacon &&
     design.riskPosture === DESIGN.riskPosture &&
+    design.mission.objective === DESIGN.mission.objective &&
+    design.mission.orbit === DESIGN.mission.orbit &&
+    design.mission.launch === DESIGN.mission.launch &&
     (Object.keys(DESIGN.ids) as DesignSlot[]).every((slot) => design.ids[slot] === DESIGN.ids[slot])
   );
 }

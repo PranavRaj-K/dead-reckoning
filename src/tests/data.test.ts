@@ -181,15 +181,17 @@ describe('environment loading', () => {
     const first = await loadEnvironment();
     const second = await loadEnvironment();
     expect(second).toBe(first);
-    expect(fetchMock).toHaveBeenCalledTimes(4);
+    // Three element sets (one per selectable orbit) plus three DONKI endpoints.
+    expect(fetchMock).toHaveBeenCalledTimes(6);
 
     resetEnvironment();
     await loadEnvironment();
-    expect(fetchMock).toHaveBeenCalledTimes(8);
+    expect(fetchMock).toHaveBeenCalledTimes(12);
   });
 
   it('describes unavailable sources without pretending they are live', async () => {
     const lines = provenanceLines({
+      orbits: {} as never,
       gp: {
         status: 'error',
         sourceName: 'CelesTrak',
@@ -269,8 +271,8 @@ describe('polite polling', () => {
     expect(bundle.gp.status).toBe('cached');
     expect(bundle.gp.error).toContain('Reusing');
     expect(bundle.gp.fetchedAtUtc).toBe(fresh);
-    // GP never hit the network; the corrupt weather entry was ignored and DONKI was tried.
-    expect(fetchMock.mock.calls.some(([url]) => String(url).includes('gp.php'))).toBe(false);
+    // The default orbit never hit the network; the corrupt weather entry was ignored and DONKI was tried.
+    expect(fetchMock.mock.calls.some(([url]) => String(url).includes('CATNR=40697'))).toBe(false);
     expect(fetchMock.mock.calls.some(([url]) => String(url).includes('DONKI'))).toBe(true);
     expect(bundle.weather.payload?.flares).toBeInstanceOf(Array);
   });

@@ -13,7 +13,7 @@ const Spacecraft3D = lazy(() => import('../three/Spacecraft3D'));
 /** Each claim is a chip; the full sentence is one tap away. */
 const REALITY = {
   real: [
-    { label: 'Orbit', detail: `CelesTrak GP/OMM elements for NORAD ${REFERENCE_NORAD_ID}, fetched live where possible.` },
+    { label: 'Orbits', detail: `Real element sets for three objects you can fly on: Sentinel-2A (NORAD ${REFERENCE_NORAD_ID}), Landsat 9 and the ISS, fetched live from CelesTrak where possible.` },
     { label: 'SGP4 propagation', detail: 'Sunlight, eclipse, station passes and ground track come from that real orbit.' },
     { label: 'Space weather', detail: 'NASA DONKI flare, geomagnetic-storm and SEP event records.' },
     { label: 'Sun position', detail: 'satellite.js solar ephemeris, used for the eclipse test.' },
@@ -81,12 +81,12 @@ export function Briefing({
             <dd className="mono">6 h · 12 scenes</dd>
           </div>
           <div>
-            <dt>Mass limit</dt>
-            <dd className="mono">{num(SCENARIO.massLimitKg, 1)} kg</dd>
+            <dt>Choices</dt>
+            <dd className="mono">3 goals · 3 orbits · 3 rockets</dd>
           </div>
           <div>
-            <dt>Cost limit</dt>
-            <dd className="mono">${num(SCENARIO.costLimitUsd)}</dd>
+            <dt>Budget</dt>
+            <dd className="mono">${num(SCENARIO.costLimitUsd)} incl. launch</dd>
           </div>
           <div>
             <dt>Injected faults</dt>
@@ -111,7 +111,7 @@ export function Briefing({
 
       <div className="brief-grid">
         <Panel
-          title="Reference orbit"
+          title="Default orbit"
           subtitle={gp ? `${gp.objectName} · NORAD ${gp.noradId}` : 'Unavailable'}
           actions={<span className={`status-text s-${env.gp.status}`}>{env.gp.status.toUpperCase()}</span>}
         >

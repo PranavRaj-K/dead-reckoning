@@ -69,7 +69,7 @@ live fetch fails we fall back to a stored snapshot and say so; we never relabel 
 
 **On screen**
 - 7 slots + backup beacon + risk posture
-- **4.5 kg** · **$110,000** · recorder and downlink budgets
+- **4–6 kg by launch** · **$140,000 incl. launch** · recorder and downlink budgets
 - No dominant design: three presets, all valid, all flawed
 
 **Say (30 s)**

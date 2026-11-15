@@ -3,7 +3,7 @@
  * mission clock. The simulation itself stays pure; this hook just feeds it.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { COMPONENTS, DEFAULT_DESIGN, PRESETS, SCENARIO, SLOT_ORDER } from '../sim/catalogue';
+import { COMPONENTS, DEFAULT_DESIGN, PRESETS, SCENARIO, SLOT_ORDER, scenarioFor } from '../sim/catalogue';
 import {
   TICK_SEC,
   advanceMission,
@@ -85,6 +85,8 @@ export function useGame() {
   const [paused, setPaused] = useState(false);
   const [speed, setSpeed] = useState<number>(SPEEDS[1]);
   const [runs, setRuns] = useState<RunRecord[]>(readRuns);
+  // Up to four players share one screen; see sim/crew.ts for who owns what.
+  const [crew, setCrew] = useState<string[]>(['Player 1']);
   const alive = useRef(true);
   const recorded = useRef(false);
 
@@ -107,8 +109,10 @@ export function useGame() {
   }, [load]);
 
   /** Sunlight fraction comes from the real propagated orbit, not an assumption. */
+  const orbitData = env?.orbits[design.mission.orbit] ?? null;
+  const reference = orbitData?.payload ?? null;
   const geometry = useMemo(() => {
-    const elements = env?.gp.payload;
+    const elements = reference;
     if (!elements) return null;
     try {
       const satrec = createSatrec(elements);
@@ -120,7 +124,7 @@ export function useGame() {
     } catch {
       return null;
     }
-  }, [env]);
+  }, [reference]);
 
   const budgets: Budgets | null = useMemo(() => {
     if (!geometry) return null;
@@ -136,23 +140,28 @@ export function useGame() {
     setDesign((prev) => ({ ...prev, ids: { ...prev.ids, [slot]: id } }));
   }, []);
 
+  // Presets swap the hardware; the mission (objective, orbit, launch) stays the player's.
   const choosePreset = useCallback((id: string) => {
     const preset = PRESETS.find((entry) => entry.id === id);
-    if (preset) setDesign(preset.design);
+    if (preset) setDesign((prev) => ({ ...preset.design, mission: prev.mission }));
+  }, []);
+
+  const setMissionChoice = useCallback((patch: Partial<Design['mission']>) => {
+    setDesign((prev) => ({ ...prev, mission: { ...prev.mission, ...patch } }));
   }, []);
 
   const launch = useCallback(() => {
-    const gp = env?.gp.payload;
+    const gp = reference;
     const weather = env?.weather.payload;
-    if (!gp || !weather || !validation?.ok) return;
+    if (!env || !gp || !weather || !validation?.ok) return;
     try {
       const next = createMission({
         design,
         seed,
         reference: gp,
         weather,
-        scenario: SCENARIO,
-        provenance: provenanceLines(env),
+        scenario: scenarioFor(design.mission),
+        provenance: provenanceLines(env, design.mission.orbit),
       });
       recorded.current = false;
       setMission(next);
@@ -161,7 +170,7 @@ export function useGame() {
     } catch (error) {
       setEnvError(error instanceof Error ? error.message : String(error));
     }
-  }, [design, env, seed, validation]);
+  }, [design, env, reference, seed, validation]);
 
   const restart = useCallback(() => {
     launch();
@@ -249,6 +258,10 @@ export function useGame() {
     setSlot,
     choosePreset,
     setDesign,
+    setMissionChoice,
+    crew,
+    setCrew,
+    orbitData,
     seed,
     setSeed,
     budgets,

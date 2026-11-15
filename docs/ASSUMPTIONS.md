@@ -12,7 +12,7 @@ The in-app **"What is real, what is modelled"** panel in the briefing says the s
 
 | Input | Source | Notes |
 | --- | --- | --- |
-| Orbital elements | CelesTrak GP / OMM JSON, `CATNR=40697` (SENTINEL-2A) | Fetched live, cached in `localStorage`, or read from `src/data/snapshots/celestrak-gp.json` |
+| Orbital elements | CelesTrak GP / OMM JSON for three selectable orbits: `CATNR=40697` (Sentinel-2A, default), `49260` (Landsat 9), `25544` (ISS) | Fetched live, cached in `localStorage`, or read from `src/data/snapshots/celestrak-gp*.json`. The Landsat 9 and ISS snapshots were captured as TLEs from a public CelesTrak mirror (CelesTrak was rate-limiting the capture) and converted field by field to OMM; each envelope says so |
 | Space-weather events | NASA DONKI `FLR`, `GST`, `SEP` over a rolling 30-day window | Event classes and Kp indices only; never treated as a dose measurement |
 
 Propagation uses **satellite.js** `json2satrec` + `propagate` (SGP4, TEME). Geodetic position comes from
@@ -50,8 +50,7 @@ intended source of recorder pressure.
 | Simulation step | fixed **10 s** (`TICK_SEC`), with at most 500 steps integrated per UI call |
 | Mission duration | 6 h (21,600 s) |
 | Observation windows | 12 windows, 180 s each, first at t+300 s, spaced 1,500 s apart |
-| Science target | 50 points |
-| Data target | 60 MB delivered |
+| Science / data target | Set by the mission objective: imaging survey 50 points / 60 MB (default), wide-area mapping 30 / 120 MB, precision science 90 / 40 MB |
 | Injected faults | Radio at 6,480 s, ADCS at 11,880 s, battery at 16,848 s |
 | Brownout failure | **600 s** of continuous brownout ends the mission; recharging above empty ends the brownout and resets the count |
 
@@ -109,8 +108,10 @@ produces exactly the same state as 30 × 30 s.
 
 | Constant | Value |
 | --- | --- |
-| Launch mass limit | 4.5 kg |
-| Cost limit | $110,000 |
+| Launch mass limit | Set by the launch: rideshare to sun-synchronous 4.5 kg ($30,000), deploy from the space station 4.0 kg ($20,000), dedicated small launcher 6.0 kg ($45,000) |
+| Cost limit | $140,000 for the whole mission, launch included (the default rideshare leaves $110,000 for parts) |
+| Launch reach | Rideshare: the two sun-synchronous orbits. Station deploy: the ISS orbit only. Dedicated: any orbit. A launch that cannot reach the chosen orbit blocks launch |
+| Team play | 1–4 players on one screen. Roles: mission lead (objective, orbit, launch, posture), spacecraft engineer (bus, arrays, battery; battery fault), communications (radio, antenna, beacon; radio fault), science and attitude (instrument, ADCS; ADCS fault). Roles are shared round-robin when there are fewer than four players |
 | Backup beacon | +0.05 kg, +$1,200, 0.4 kbps omni fallback, 0.6 W |
 
 Component masses, costs, power draws, data rates and recorder sizes are game assumptions chosen so that no
@@ -174,8 +175,14 @@ no time-varying weather evolution within a mission.
 Status: `SUCCESS` requires the science **and** data targets met; `PARTIAL` requires at least half the
 science target; anything less, or a lost spacecraft, is `FAILURE`. Grades: **S** for a `SUCCESS` scoring ≥ 95, then
 A ≥ 85, B ≥ 70, C ≥ 55, D ≥ 40, otherwise F. The in-app **Grade S plan** (`src/sim/perfect.ts`) is the
-highest-scoring design and recovery sequence for the default seed (96.5), found by simulating all 1,140
-launchable designs against every recovery combination; a test replays it. The grade is a teaching signal, not a competition score.
+highest-scoring design, launch and recovery sequence for the default mission and seed (97.4), found by
+simulating every launchable design on every launch that reaches the default orbit against every recovery
+combination; a test replays it.
+
+An exhaustive sweep of every launchable design on every objective and orbit (default seed, calm weather)
+found that every pairing is flyable. The best outcomes differ by orbit: precision science reaches S only
+from the Sentinel-2A orbit and tops out at B from Landsat 9 and ISS orbits, and wide-area mapping tops out at
+A from the ISS orbit. The orbit is a real decision, not a cosmetic one. The grade is a teaching signal, not a competition score.
 
 Every figure in the debrief is read from recorded mission state; nothing is recomputed from a script.
 

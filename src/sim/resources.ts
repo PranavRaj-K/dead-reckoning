@@ -4,7 +4,7 @@
  * Every numeric constant here is an educational game assumption and is listed
  * in docs/ASSUMPTIONS.md. None of it is a flight model.
  */
-import { BEACON_SPEC, componentById } from './catalogue';
+import { BEACON_SPEC, componentById, launchById, orbitById } from './catalogue';
 import type {
   BudgetIssue,
   Budgets,
@@ -91,8 +91,10 @@ export function computeBudgets({ design, scenario, sunlitFraction, eclipseMinute
   const sceneCount = scenario.scenes.length;
   const sceneSeconds = scenario.scenes.reduce((sum, scene) => sum + (scene.endSec - scene.startSec), 0);
 
+  // The launch sets the mass limit and spends from the same mission budget as the parts.
+  const launch = launchById(design.mission.launch);
   const massKg = round(Object.values(specs).reduce((sum, spec) => sum + spec.massKg, 0) + (design.beacon ? BEACON_SPEC.massKg : 0), 2);
-  const costUsd = Object.values(specs).reduce((sum, spec) => sum + spec.costUsd, 0) + (design.beacon ? BEACON_SPEC.costUsd : 0);
+  const costUsd = Object.values(specs).reduce((sum, spec) => sum + spec.costUsd, 0) + (design.beacon ? BEACON_SPEC.costUsd : 0) + launch.costUsd;
 
   const generationW = specs.power.generationW ?? 0;
   const avgLoadW = round(
@@ -122,8 +124,8 @@ export function computeBudgets({ design, scenario, sunlitFraction, eclipseMinute
 
   return {
     massKg,
-    massLimitKg: scenario.massLimitKg,
-    massMarginKg: round(scenario.massLimitKg - massKg, 2),
+    massLimitKg: launch.massCapacityKg,
+    massMarginKg: round(launch.massCapacityKg - massKg, 2),
     costUsd,
     costLimitUsd: scenario.costLimitUsd,
     costMarginUsd: scenario.costLimitUsd - costUsd,
@@ -159,11 +161,20 @@ export function validateDesign(design: Design, budgets: Budgets): Validation {
   const specs = slotSpecs(design);
   const rule = POSTURE_RULES[design.riskPosture];
 
+  const launch = launchById(design.mission.launch);
+  if (!launch.orbits.includes(design.mission.orbit)) {
+    issues.push({
+      id: 'launch-orbit',
+      severity: 'error',
+      message: `The ${launch.name.toLowerCase()} cannot reach the ${orbitById(design.mission.orbit).name} orbit. Pick another launch or orbit.`,
+    });
+  }
+
   if (budgets.massKg > budgets.massLimitKg) {
     issues.push({
       id: 'mass',
       severity: 'error',
-      message: `Over the ${budgets.massLimitKg} kg launch limit by ${round(budgets.massKg - budgets.massLimitKg, 2)} kg. Remove mass or pick the lighter bus.`,
+      message: `Over the ${budgets.massLimitKg} kg launch limit by ${round(budgets.massKg - budgets.massLimitKg, 2)} kg. Remove mass, pick the lighter bus, or buy a bigger launch.`,
     });
   } else if (budgets.massMarginKg < 0.1) {
     issues.push({

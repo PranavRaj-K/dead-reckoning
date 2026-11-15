@@ -5,7 +5,10 @@
  * 3U-class LEO Earth-observation mission. They are order-of-magnitude plausible
  * but are not manufacturer specifications and must not be used for real design.
  */
-import type { ComponentSpec, Design, DesignSlot, MissionScenario } from './types';
+import type { ComponentSpec, Design, DesignSlot, LaunchId, MissionChoice, MissionScenario, ObjectiveId, OrbitId } from './types';
+
+/** Imaging survey from Sentinel-2A's orbit on a rideshare: the mission the game opens with. */
+export const DEFAULT_MISSION: MissionChoice = { objective: 'survey', orbit: 'sso-786', launch: 'rideshare-sso' };
 
 export const COMPONENTS: readonly ComponentSpec[] = [
   // --- bus -----------------------------------------------------------------
@@ -274,8 +277,13 @@ export const SLOT_ORDER: DesignSlot[] = [
   'bus',
 ];
 
-export function design(ids: Record<DesignSlot, string>, beacon: boolean, riskPosture: Design['riskPosture']): Design {
-  return { ids, beacon, riskPosture };
+export function design(
+  ids: Record<DesignSlot, string>,
+  beacon: boolean,
+  riskPosture: Design['riskPosture'],
+  mission: MissionChoice = DEFAULT_MISSION,
+): Design {
+  return { mission, ids, beacon, riskPosture };
 }
 
 export const PRESETS: { id: string; name: string; blurb: string; design: Design }[] = [
@@ -341,16 +349,112 @@ export const DEFAULT_DESIGN: Design = PRESETS[0].design;
 /* Scenario                                                                    */
 /* -------------------------------------------------------------------------- */
 
+/** The rideshare launch's capacity: the default mission's mass limit. */
 export const MASS_LIMIT_KG = 4.5;
-export const COST_LIMIT_USD = 110_000;
+/** Total mission budget, launch included. The default rideshare leaves $110,000 for the spacecraft. */
+export const COST_LIMIT_USD = 140_000;
 export const MISSION_DURATION_SEC = 6 * 3600;
 export const SCENE_COUNT = 12;
 export const SCENE_DURATION_SEC = 180;
 export const SCIENCE_TARGET = 50;
 export const DATA_TARGET_MB = 60;
 
-/** Reference object whose real GP elements define the mission's environment. */
+/** Reference object whose real GP elements define the default mission's environment. */
 export const REFERENCE_NORAD_ID = 40697; // SENTINEL-2A, sun-synchronous ~786 km
+
+export interface OrbitOption {
+  id: OrbitId;
+  name: string;
+  /** Real object whose element set the mission flies on. */
+  reference: string;
+  noradId: number;
+  blurb: string;
+}
+
+export const ORBITS: OrbitOption[] = [
+  {
+    id: 'sso-786',
+    name: 'Sun-synchronous, 786 km',
+    reference: 'Sentinel-2A',
+    noradId: 40697,
+    blurb: 'Crosses the equator at the same local time every orbit, so lighting is steady for imaging.',
+  },
+  {
+    id: 'sso-705',
+    name: 'Sun-synchronous, 705 km',
+    reference: 'Landsat 9 (NASA/USGS)',
+    noradId: 49260,
+    blurb: 'The Landsat orbit: a little lower and faster, with a different pass pattern over the stations.',
+  },
+  {
+    id: 'iss-420',
+    name: 'Space station orbit, 420 km, 51.6°',
+    reference: 'ISS (ZARYA)',
+    noradId: 25544,
+    blurb: 'Cheap to reach from the station, but low, inclined and never sun-synchronous: lighting drifts.',
+  },
+];
+
+export interface ObjectiveOption {
+  id: ObjectiveId;
+  name: string;
+  blurb: string;
+  scienceTarget: number;
+  dataTargetMb: number;
+}
+
+export const OBJECTIVES: ObjectiveOption[] = [
+  { id: 'survey', name: 'Imaging survey', blurb: 'Balanced: enough science and enough data.', scienceTarget: 50, dataTargetMb: 60 },
+  { id: 'mapping', name: 'Wide-area mapping', blurb: 'Volume wins. Bring down as much imagery as the passes allow.', scienceTarget: 30, dataTargetMb: 120 },
+  { id: 'precision', name: 'Precision science', blurb: 'Fewer bytes, sharper scenes. Science value is everything.', scienceTarget: 90, dataTargetMb: 40 },
+];
+
+export interface LaunchOption {
+  id: LaunchId;
+  name: string;
+  blurb: string;
+  costUsd: number;
+  /** Mass the vehicle or dispenser will accept. */
+  massCapacityKg: number;
+  orbits: OrbitId[];
+}
+
+export const LAUNCHES: LaunchOption[] = [
+  {
+    id: 'rideshare-sso',
+    name: 'Rideshare to sun-synchronous',
+    blurb: 'Share a ride with a bigger payload. Cheap, but you go where it goes.',
+    costUsd: 30_000,
+    massCapacityKg: 4.5,
+    orbits: ['sso-786', 'sso-705'],
+  },
+  {
+    id: 'iss-deploy',
+    name: 'Deploy from the space station',
+    blurb: 'Ride up with cargo and get pushed out of an airlock dispenser. Cheapest and lightest.',
+    costUsd: 20_000,
+    massCapacityKg: 4.0,
+    orbits: ['iss-420'],
+  },
+  {
+    id: 'dedicated',
+    name: 'Dedicated small launcher',
+    blurb: 'Your own rocket: any orbit and more mass, at the highest price.',
+    costUsd: 45_000,
+    massCapacityKg: 6.0,
+    orbits: ['sso-786', 'sso-705', 'iss-420'],
+  },
+];
+
+export const orbitById = (id: OrbitId) => ORBITS.find((orbit) => orbit.id === id) ?? ORBITS[0];
+export const objectiveById = (id: ObjectiveId) => OBJECTIVES.find((objective) => objective.id === id) ?? OBJECTIVES[0];
+export const launchById = (id: LaunchId) => LAUNCHES.find((launch) => launch.id === id) ?? LAUNCHES[0];
+
+/** The shared scenario with this mission's targets. */
+export function scenarioFor(mission: MissionChoice): MissionScenario {
+  const objective = objectiveById(mission.objective);
+  return { ...SCENARIO, scienceTarget: objective.scienceTarget, dataTargetMb: objective.dataTargetMb };
+}
 
 export const STATIONS = [
   { id: 'gs-wallops', name: 'Wallops (reference site)', latDeg: 37.94, lonDeg: -75.46, altitudeKm: 0.012 },

@@ -50,7 +50,19 @@ export interface ComponentSpec {
   tags?: string[];
 }
 
+export type OrbitId = 'sso-786' | 'sso-705' | 'iss-420';
+export type ObjectiveId = 'survey' | 'mapping' | 'precision';
+export type LaunchId = 'rideshare-sso' | 'iss-deploy' | 'dedicated';
+
+/** Mission-level choices made before any part: what to achieve, where to fly, how to get there. */
+export interface MissionChoice {
+  objective: ObjectiveId;
+  orbit: OrbitId;
+  launch: LaunchId;
+}
+
 export interface Design {
+  mission: MissionChoice;
   ids: Record<DesignSlot, string>;
   /** Optional low-rate backup beacon: enables one salvage path after radio loss. */
   beacon: boolean;

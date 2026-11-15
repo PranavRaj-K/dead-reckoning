@@ -9,7 +9,7 @@ import {
   powerStep,
   validateDesign,
 } from '../sim/resources';
-import { DEFAULT_DESIGN, PRESETS, SCENARIO, design } from '../sim/catalogue';
+import { DEFAULT_DESIGN, OBJECTIVES, PRESETS, SCENARIO, design, launchById, scenarioFor } from '../sim/catalogue';
 import type { Design } from '../sim/types';
 
 const geometry = { sunlitFraction: 0.66, eclipseMinutes: 34 };
@@ -211,5 +211,37 @@ describe('unit helpers', () => {
   it('converts kbps to MB per second', () => {
     expect(kbpsToMbPerSec(8_192)).toBeCloseTo(1.024, 6);
     expect(kbpsToMbPerSec(0)).toBe(0);
+  });
+});
+
+describe('mission choices', () => {
+  const geometry = { sunlitFraction: 0.66, eclipseMinutes: 34 };
+
+  it('takes the mass limit and part of the budget from the launch', () => {
+    const rideshare = computeBudgets({ design: DEFAULT_DESIGN, scenario: SCENARIO, ...geometry });
+    const dedicated = computeBudgets({
+      design: { ...DEFAULT_DESIGN, mission: { ...DEFAULT_DESIGN.mission, launch: 'dedicated' } },
+      scenario: SCENARIO,
+      ...geometry,
+    });
+    expect(rideshare.massLimitKg).toBe(launchById('rideshare-sso').massCapacityKg);
+    expect(dedicated.massLimitKg).toBe(launchById('dedicated').massCapacityKg);
+    expect(dedicated.costUsd - rideshare.costUsd).toBe(launchById('dedicated').costUsd - launchById('rideshare-sso').costUsd);
+  });
+
+  it('blocks a launch that cannot reach the chosen orbit', () => {
+    const stranded = { ...DEFAULT_DESIGN, mission: { ...DEFAULT_DESIGN.mission, orbit: 'iss-420' as const } };
+    const validation = validateDesign(stranded, computeBudgets({ design: stranded, scenario: SCENARIO, ...geometry }));
+    expect(validation.ok).toBe(false);
+    expect(validation.issues.some((issue) => issue.id === 'launch-orbit')).toBe(true);
+  });
+
+  it('sets the mission targets from the objective', () => {
+    for (const objective of OBJECTIVES) {
+      const scenario = scenarioFor({ ...DEFAULT_DESIGN.mission, objective: objective.id });
+      expect(scenario.scienceTarget).toBe(objective.scienceTarget);
+      expect(scenario.dataTargetMb).toBe(objective.dataTargetMb);
+      expect(scenario.faults).toEqual(SCENARIO.faults);
+    }
   });
 });
