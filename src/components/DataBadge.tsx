@@ -8,7 +8,7 @@ import type { DataSnapshot } from '../sim/types';
  */
 export function DataBadge<T>({ label, data }: { label: string; data: DataSnapshot<T> }) {
   return (
-    <details className={`databadge databadge-${data.status}`}>
+    <details className={`databadge databadge-${data.status}`} name="databadge">
       <summary>
         <span className="dot" aria-hidden="true" />
         <span className="databadge-label">{label}</span>

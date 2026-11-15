@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { clock, hhmm } from '../lib/format';
 import { missionClockUtc } from '../sim/mission';
 import type { EnvironmentBundle } from '../data/loadEnvironment';
@@ -22,6 +23,20 @@ export function TopBar({
   mission: MissionState | null;
   onNavigate: (screen: Screen) => void;
 }) {
+  // name="databadge" keeps only one panel open; this dismisses it on any
+  // click that is not on a badge (native <details> has no such behaviour).
+  useEffect(() => {
+    const dismiss = (event: Event) => {
+      const target = event.target as Element | null;
+      if (target?.closest('.databadge')) return;
+      for (const open of document.querySelectorAll<HTMLDetailsElement>('details.databadge[open]')) {
+        open.open = false;
+      }
+    };
+    document.addEventListener('pointerdown', dismiss);
+    return () => document.removeEventListener('pointerdown', dismiss);
+  }, []);
+
   return (
     <header className="topbar">
       <button className="brand" onClick={() => onNavigate('briefing')} aria-label="Dead Reckoning home">
