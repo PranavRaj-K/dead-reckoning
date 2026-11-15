@@ -35,7 +35,7 @@ describe('mission scoring', () => {
     expect(result.status).toBe('SUCCESS');
     expect(result.components).toEqual({ science: 100, data: 100, resources: 100 });
     expect(result.score).toBe(100);
-    expect(result.grade).toBe('A');
+    expect(result.grade).toBe('S');
   });
 
   it('reports PARTIAL at half the science target', () => {

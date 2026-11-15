@@ -2,7 +2,8 @@
  * Mission scoring. Derived only from values the simulation actually recorded.
  *
  * Weights: science delivered 60%, data delivered 25%, resource stewardship 15%.
- * The grade is a teaching signal, not a competition score.
+ * The grade is a teaching signal, not a competition score. S is reserved for a
+ * mission that meets both targets and scores 95 or more.
  */
 import type { MissionResult, MissionState } from './types';
 import { clamp } from './resources';
@@ -45,7 +46,7 @@ export function evaluateMission(state: MissionState): MissionResult {
 
   return {
     status,
-    grade: gradeFor(score),
+    grade: gradeFor(score, status),
     score,
     scienceDelivered: round(state.scienceDelivered, 2),
     scienceTarget: state.scienceTarget,
@@ -64,7 +65,8 @@ export function evaluateMission(state: MissionState): MissionResult {
   };
 }
 
-function gradeFor(score: number): MissionResult['grade'] {
+function gradeFor(score: number, status: MissionResult['status']): MissionResult['grade'] {
+  if (status === 'SUCCESS' && score >= 95) return 'S';
   if (score >= 85) return 'A';
   if (score >= 70) return 'B';
   if (score >= 55) return 'C';

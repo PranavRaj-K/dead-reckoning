@@ -12,6 +12,8 @@ import type {
 import { num, pct, usd } from '../lib/format';
 import { SpacecraftPreview } from './SpacecraftPreview';
 import { WebglBoundary } from '../three/WebglBoundary';
+import { isPerfectDesign } from '../sim/perfect';
+import { PerfectPlan } from './PerfectPlan';
 import { webglAvailable } from '../three/util';
 import { Bar, Panel, type Tone } from './ui';
 
@@ -52,6 +54,7 @@ export function Build({
   onDesign,
   onSeed,
   onLaunch,
+  onPerfect,
 }: {
   design: Design;
   budgets: Budgets;
@@ -62,6 +65,7 @@ export function Build({
   onDesign: (design: Design) => void;
   onSeed: (seed: number) => void;
   onLaunch: () => void;
+  onPerfect: () => void;
 }) {
   const rule = POSTURE_RULES[design.riskPosture];
   const requiredMarginW = budgets.avgLoadW * rule.minEnergyMarginRatio;
@@ -101,6 +105,13 @@ export function Build({
               <span>{preset.blurb}</span>
             </button>
           ))}
+          <button className="preset preset-perfect" onClick={() => {
+            onPerfect();
+            setRunKey((key) => key + 1);
+          }}>
+            <strong>Grade S plan</strong>
+            <span>The best design for this orbit, with every part and recovery explained.</span>
+          </button>
         </div>
       </div>
 
@@ -129,6 +140,8 @@ export function Build({
               </button>
             </div>
           </section>
+
+          {isPerfectDesign(design, seed) ? <PerfectPlan /> : null}
 
           {/* Narrow screens stack the budgets below every part; this strip keeps them in view. */}
           <div className="budget-hud" aria-label="Live budgets">

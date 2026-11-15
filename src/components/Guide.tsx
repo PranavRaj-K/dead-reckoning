@@ -14,7 +14,7 @@ const STEPS: Record<Screen, Step[]> = {
     { targets: ['.hero-actions .btn-primary'], title: 'Start building', body: 'Open the workbench to design your spacecraft.' },
   ],
   build: [
-    { targets: ['[data-guide="presets"]'], title: 'Pick a starter design', body: 'Three legal designs, three different bets. Picking one rebuilds the model.' },
+    { targets: ['[data-guide="presets"]'], title: 'Pick a starter design', body: 'Three legal designs, three different bets. Stuck? "Grade S plan" loads the best one and explains every choice.' },
     { targets: ['[data-guide="assembly"]'], title: 'Watch it come together', body: 'Every part you choose bolts onto the model. Drag to rotate it.' },
     { targets: ['[data-guide="parts"]'], title: 'Swap parts', body: 'Each card spends mass, money or power. The part you touch is outlined in amber.' },
     { targets: ['.budget-hud', '[data-guide="budgets"]'], title: 'Keep every bar green', body: 'A red bar blocks launch. Fix it by trading a heavier or hungrier part.' },

@@ -172,8 +172,10 @@ no time-varying weather evolution within a mission.
 | Resources | 15% | Mean of mass-margin ratio, energy-margin ratio (against 15% of average load) and final battery ratio |
 
 Status: `SUCCESS` requires the science **and** data targets met; `PARTIAL` requires at least half the
-science target; anything less, or a lost spacecraft, is `FAILURE`. Grades: A ≥ 85, B ≥ 70, C ≥ 55, D ≥ 40,
-otherwise F. The grade is a teaching signal, not a competition score.
+science target; anything less, or a lost spacecraft, is `FAILURE`. Grades: **S** for a `SUCCESS` scoring ≥ 95, then
+A ≥ 85, B ≥ 70, C ≥ 55, D ≥ 40, otherwise F. The in-app **Grade S plan** (`src/sim/perfect.ts`) is the
+highest-scoring design and recovery sequence for the default seed (96.5), found by simulating all 1,140
+launchable designs against every recovery combination; a test replays it. The grade is a teaching signal, not a competition score.
 
 Every figure in the debrief is read from recorded mission state; nothing is recomputed from a script.
 

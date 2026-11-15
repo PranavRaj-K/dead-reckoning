@@ -78,7 +78,7 @@ function App() {
       <TopBar env={game.env} screen={game.screen} mission={mission} onNavigate={game.go} />
       <main className="main">
         {game.screen === 'briefing' ? (
-          <Briefing env={game.env} onStart={() => game.go('build')} />
+          <Briefing env={game.env} onStart={() => game.go('build')} onPerfect={game.loadPerfect} />
         ) : null}
 
         {game.screen === 'build' && budgets && validation ? (
@@ -91,6 +91,7 @@ function App() {
             onPreset={game.choosePreset}
             onDesign={game.setDesign}
             onSeed={game.setSeed}
+            onPerfect={game.loadPerfect}
             onLaunch={game.launch}
           />
         ) : null}
@@ -115,6 +116,7 @@ function App() {
             runs={game.runs}
             onRestart={game.restart}
             onNewDesign={() => game.go('build')}
+            onPerfect={game.loadPerfect}
             onApply={(next) => {
               game.setDesign(next);
               game.go('build');

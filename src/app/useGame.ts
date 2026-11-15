@@ -12,6 +12,7 @@ import {
   setSceneSkipped,
 } from '../sim/mission';
 import { computeBudgets, validateDesign } from '../sim/resources';
+import { PERFECT_RUN } from '../sim/perfect';
 import { evaluateMission } from '../sim/scoring';
 import { createSatrec, dateAt, estimateSunlight, orbitalPeriodMinutes } from '../sim/orbit';
 import {
@@ -226,6 +227,13 @@ export function useGame() {
     return () => window.clearTimeout(timer);
   }, [finished, mission]);
 
+  /** Loads the Grade S design and seed, then opens the workbench with the plan explained. */
+  const loadPerfect = useCallback(() => {
+    setDesign(PERFECT_RUN.design);
+    setSeed(PERFECT_RUN.seed);
+    setScreen('build');
+  }, []);
+
   const clearRuns = useCallback(() => {
     setRuns([]);
     writeRuns([]);
@@ -250,6 +258,7 @@ export function useGame() {
     result,
     runs,
     clearRuns,
+    loadPerfect,
     paused,
     setPaused,
     speed,

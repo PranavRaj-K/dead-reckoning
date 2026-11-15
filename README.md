@@ -31,7 +31,7 @@ Other scripts:
 | --- | --- |
 | `npm run build` | Type-checks (`tsc -b`) then builds to `dist/` |
 | `npm run preview` | Serves the production build locally |
-| `npm test` | Runs the Vitest suite (105 unit tests, no DOM) |
+| `npm test` | Runs the Vitest suite (108 unit tests, no DOM) |
 | `npm run lint` | Runs oxlint |
 
 No environment file is needed. To supply your own keys, copy `.env.example` to `.env.local`.
@@ -52,6 +52,9 @@ No environment file is needed. To supply your own keys, copy `.env.example` to `
    reads the run (lost scenes, power cuts, off-pointing imagery, a failed radio reset with no beacon) and
    offers up to four one-part changes, each re-budgeted so it says whether it still launches. One click
    opens the workbench with that part swapped in.
+5. **Grade S plan** — one click (on the brief, the workbench or the debrief) loads the highest-scoring
+   design for the default seed. Every part and every recovery is a button that explains why it wins, and
+   each fault dialog marks the Grade S move.
 
 Everything is operable with mouse or keyboard (standard tab / Enter / Space). There are no hidden
 shortcut keys.
@@ -169,6 +172,7 @@ hosts only. `npm run preview` serves the build with it, so test there before dep
 
 | File | What it is |
 | --- | --- |
+| [`docs/demo/dead-reckoning-demo.mp4`](docs/demo/dead-reckoning-demo.mp4) | 2-minute captioned demo recorded from the production build: 3D assembly, the Grade S plan, all three faults with coaching, the S debrief |
 | [`DEMO_SCRIPT.md`](DEMO_SCRIPT.md) | 90-second recording script, timed shot by shot |
 | [`SLIDES.md`](SLIDES.md) | Slide-by-slide outline with speaker notes |
 | [`docs/ASSUMPTIONS.md`](docs/ASSUMPTIONS.md) | Every constant and mapping rule the model uses |

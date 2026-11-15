@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { clock, num, pct, stamp, usd } from '../lib/format';
 import { adviseNextRun } from '../sim/advice';
+import { isPerfectRun } from '../sim/perfect';
 import { componentById } from '../sim/catalogue';
 import { FAULTS } from '../sim/salvage';
 import type { Design, MissionResult, MissionState, RunRecord } from '../sim/types';
@@ -23,6 +24,7 @@ export function Debrief({
   onRestart,
   onNewDesign,
   onApply,
+  onPerfect,
 }: {
   mission: MissionState;
   result: MissionResult;
@@ -30,8 +32,10 @@ export function Debrief({
   onRestart: () => void;
   onNewDesign: () => void;
   onApply: (design: Design) => void;
+  onPerfect: () => void;
 }) {
-  const gradeTone = result.grade === 'A' || result.grade === 'B' ? 'ok' : result.grade === 'C' ? 'warn' : 'bad';
+  const gradeTone = result.grade === 'S' || result.grade === 'A' || result.grade === 'B' ? 'ok' : result.grade === 'C' ? 'warn' : 'bad';
+  const perfect = isPerfectRun(mission);
   const faultsApplied = mission.faults.filter((fault) => fault.status !== 'pending');
   const loudest = [...mission.causal].sort((a, b) => a.t - b.t);
   const advice = useMemo(() => adviseNextRun(mission, result), [mission, result]);
@@ -41,7 +45,7 @@ export function Debrief({
       <section className={`verdict verdict-${gradeTone}`}>
         <div className="verdict-grade">
           <span className="eyebrow">Mission grade</span>
-          <strong>{result.grade}</strong>
+          <strong className={result.grade === 'S' ? 'grade-s' : undefined}>{result.grade}</strong>
           <span className="mono">{num(result.score, 1)} / 100</span>
         </div>
         <div className="verdict-body">
@@ -83,7 +87,15 @@ export function Debrief({
             <button className="btn btn-ghost" onClick={onNewDesign}>
               Change the design
             </button>
+            {result.grade !== 'S' ? (
+              <button className="btn btn-ghost" onClick={onPerfect}>
+                See how to get an S
+              </button>
+            ) : null}
           </div>
+          {perfect && result.grade === 'S' ? (
+            <p className="perfect-note">You flew the Grade S plan: every part and every recovery chosen for this orbit, this weather and this seed.</p>
+          ) : null}
           <p className="note small">
             Same seed and same data reproduce this run exactly. “Fly again” keeps both, so a
             different outcome means a different decision.

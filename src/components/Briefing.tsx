@@ -29,9 +29,11 @@ const REALITY = {
 export function Briefing({
   env,
   onStart,
+  onPerfect,
 }: {
   env: EnvironmentBundle;
   onStart: () => void;
+  onPerfect: () => void;
 }) {
   const gp = env.gp.payload;
   const weather = env.weather.payload;
@@ -65,6 +67,9 @@ export function Briefing({
         <div className="hero-actions">
           <button className="btn btn-primary" onClick={onStart}>
             Design the spacecraft
+          </button>
+          <button className="btn btn-ghost" onClick={onPerfect}>
+            Show me a Grade S run
           </button>
           <a className="btn btn-ghost" href="#reality">
             What is real here?

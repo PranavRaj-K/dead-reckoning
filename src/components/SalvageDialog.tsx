@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { clock } from '../lib/format';
 import { faultCopy, getRecoveryActions } from '../sim/salvage';
+import { PERFECT_RUN, isPerfectRun } from '../sim/perfect';
 import type { MissionState } from '../sim/types';
 import { Bar, Chip, Info } from './ui';
 
@@ -28,6 +29,8 @@ export function SalvageDialog({
   const faultId = state.activeFault;
   const copy = faultId ? faultCopy(faultId) : null;
   const actions = faultId ? getRecoveryActions(state, faultId) : [];
+  // On the Grade S plan the dialog coaches: it marks the best move and says why.
+  const coach = faultId && isPerfectRun(state) ? PERFECT_RUN.flight[faultId] : null;
 
   return (
     <dialog
@@ -104,10 +107,11 @@ export function SalvageDialog({
               <div className="actions">
                 {actions.map((action) => {
                   const blocked = Boolean(action.unavailableReason);
+                  const best = coach?.actionId === action.id;
                   return (
                     <button
                       key={action.id}
-                      className={`action ${blocked ? 'is-blocked' : ''}`}
+                      className={`action ${blocked ? 'is-blocked' : ''} ${best ? 'is-best' : ''}`}
                       disabled={blocked}
                       onClick={() => onResolve(action.id)}
                     >
@@ -117,9 +121,11 @@ export function SalvageDialog({
                           <Chip tone="warn">{Math.round(action.risk.successChance * 100)}% odds</Chip>
                         ) : null}
                         {action.endsMission ? <Chip tone="bad">ends mission</Chip> : null}
+                        {best ? <Chip tone="ok">Grade S move</Chip> : null}
                       </span>
                       <span className="action-desc">{action.description}</span>
                       <span className="action-tradeoff">{action.tradeoff}</span>
+                      {best ? <span className="action-why">Why: {coach.why}</span> : null}
                       {action.unavailableReason ? (
                         <span className="action-blocked">{action.unavailableReason}</span>
                       ) : null}

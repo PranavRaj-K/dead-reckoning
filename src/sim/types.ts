@@ -348,7 +348,7 @@ export interface MissionState {
 
 export interface MissionResult {
   status: 'SUCCESS' | 'PARTIAL' | 'FAILURE';
-  grade: 'A' | 'B' | 'C' | 'D' | 'F';
+  grade: 'S' | 'A' | 'B' | 'C' | 'D' | 'F';
   score: number;
   scienceDelivered: number;
   scienceTarget: number;
