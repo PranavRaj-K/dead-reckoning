@@ -31,7 +31,7 @@ Other scripts:
 | --- | --- |
 | `npm run build` | Type-checks (`tsc -b`) then builds to `dist/` |
 | `npm run preview` | Serves the production build locally |
-| `npm test` | Runs the Vitest suite (102 unit tests, no DOM) |
+| `npm test` | Runs the Vitest suite (105 unit tests, no DOM) |
 | `npm run lint` | Runs oxlint |
 
 No environment file is needed. To supply your own keys, copy `.env.example` to `.env.local`.
@@ -48,7 +48,10 @@ No environment file is needed. To supply your own keys, copy `.env.example` to `
    passes, a live flight log. Three faults fire on a fixed timeline and pause the clock; each offers
    two or more recovery paths whose preconditions are checked against the design you actually built.
 4. **Debrief** — grade, score breakdown (science 60%, data 25%, resource stewardship 15%), the causal
-   timeline from decision to fault, and a comparison table across saved runs.
+   timeline from decision to fault, and a comparison table across saved runs. **What to change next**
+   reads the run (lost scenes, power cuts, off-pointing imagery, a failed radio reset with no beacon) and
+   offers up to four one-part changes, each re-budgeted so it says whether it still launches. One click
+   opens the workbench with that part swapped in.
 
 Everything is operable with mouse or keyboard (standard tab / Enter / Space). There are no hidden
 shortcut keys.

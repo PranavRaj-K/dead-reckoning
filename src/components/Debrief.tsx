@@ -1,7 +1,9 @@
-import { clock, num, pct, stamp } from '../lib/format';
+import { useMemo } from 'react';
+import { clock, num, pct, stamp, usd } from '../lib/format';
+import { adviseNextRun } from '../sim/advice';
 import { componentById } from '../sim/catalogue';
 import { FAULTS } from '../sim/salvage';
-import type { MissionResult, MissionState, RunRecord } from '../sim/types';
+import type { Design, MissionResult, MissionState, RunRecord } from '../sim/types';
 import { Bar, Chip, Panel } from './ui';
 
 function verdictCopy(result: MissionResult): string {
@@ -20,16 +22,19 @@ export function Debrief({
   runs,
   onRestart,
   onNewDesign,
+  onApply,
 }: {
   mission: MissionState;
   result: MissionResult;
   runs: RunRecord[];
   onRestart: () => void;
   onNewDesign: () => void;
+  onApply: (design: Design) => void;
 }) {
   const gradeTone = result.grade === 'A' || result.grade === 'B' ? 'ok' : result.grade === 'C' ? 'warn' : 'bad';
   const faultsApplied = mission.faults.filter((fault) => fault.status !== 'pending');
   const loudest = [...mission.causal].sort((a, b) => a.t - b.t);
+  const advice = useMemo(() => adviseNextRun(mission, result), [mission, result]);
 
   return (
     <div className="screen debrief">
@@ -85,6 +90,41 @@ export function Debrief({
           </p>
         </div>
       </section>
+
+      <Panel title="What to change next" subtitle="Read from this run. Apply one, then check it in the workbench." className="advice-panel">
+        <ol className="advice-list">
+          {advice.map((item, index) => (
+            <li key={item.id} className="advice">
+              <span className="advice-rank mono">{index + 1}</span>
+              <div className="advice-body">
+                <strong>{item.title}</strong>
+                <p>{item.why}</p>
+                {item.change ? (
+                  <div className="advice-change">
+                    <span className="advice-swap">{item.change.label}</span>
+                    <span className="mono dim small">
+                      {item.change.massDeltaKg >= 0 ? '+' : ''}
+                      {num(item.change.massDeltaKg, 2)} kg · {item.change.costDeltaUsd >= 0 ? '+' : '−'}
+                      {usd(Math.abs(item.change.costDeltaUsd))}
+                    </span>
+                    <Chip tone={item.change.launchable ? 'ok' : 'warn'}>
+                      {item.change.launchable ? 'still launchable' : 'needs a trade'}
+                    </Chip>
+                  </div>
+                ) : null}
+                {item.change && !item.change.launchable && item.change.blocker ? (
+                  <p className="advice-blocker">{item.change.blocker}</p>
+                ) : null}
+              </div>
+              {item.change ? (
+                <button type="button" className="btn btn-ghost btn-small" onClick={() => onApply(item.change!.design)}>
+                  Apply in workbench
+                </button>
+              ) : null}
+            </li>
+          ))}
+        </ol>
+      </Panel>
 
       <div className="debrief-grid">
         <Panel title="Score breakdown" subtitle="Science 60% · data 25% · resources 15%">

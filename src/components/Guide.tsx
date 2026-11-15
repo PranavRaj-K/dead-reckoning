@@ -27,6 +27,7 @@ const STEPS: Record<Screen, Step[]> = {
   ],
   debrief: [
     { targets: ['.verdict'], title: 'Your grade', body: 'Science 60%, data 25%, resources 15%. Fly again on the same seed to compare.' },
+    { targets: ['.advice-panel'], title: 'What to change next', body: 'Each card comes from this run. Apply one and the workbench opens with that part swapped in.' },
   ],
 };
 

@@ -115,6 +115,10 @@ function App() {
             runs={game.runs}
             onRestart={game.restart}
             onNewDesign={() => game.go('build')}
+            onApply={(next) => {
+              game.setDesign(next);
+              game.go('build');
+            }}
           />
         ) : null}
 
