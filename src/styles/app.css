@@ -49,6 +49,9 @@ body {
 html {
   background: var(--bg);
   color-scheme: dark;
+  /* Hero aperture bleeds past the viewport; clip it instead of adding a scrollbar. */
+  overflow-x: clip;
+  overflow-y: visible;
 }
 
 body {
@@ -759,20 +762,122 @@ button:disabled {
   border-bottom: 1px solid var(--line);
 }
 
-.hero::after {
+/* Decorative solar-orbital aperture. Brief page only; purely presentational. */
+
+.hero-field {
+  position: absolute;
+  top: -330px;
+  right: -210px;
+  width: 820px;
+  height: 820px;
+  z-index: -1;
+  pointer-events: none;
+}
+
+/* Dark core + orange atmosphere, so the hero copy stays legible over it. */
+.hero-field-glow {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background:
+    radial-gradient(
+      circle at 50% 50%,
+      rgba(7, 17, 31, 0.94) 0%,
+      rgba(7, 17, 31, 0.88) 42%,
+      rgba(200, 75, 22, 0.16) 58%,
+      rgba(255, 138, 36, 0.2) 67%,
+      rgba(200, 75, 22, 0.12) 74%,
+      rgba(200, 75, 22, 0.05) 84%,
+      rgba(7, 17, 31, 0) 94%
+    );
+}
+
+/* Main orbital ring: conic light falloff masked into a soft band. */
+.hero-field-ring {
+  position: absolute;
+  inset: 3%;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 0deg,
+    rgba(255, 138, 36, 0) 0deg,
+    rgba(255, 138, 36, 0.18) 18deg,
+    rgba(255, 192, 107, 0.78) 58deg,
+    rgba(255, 138, 36, 0.44) 104deg,
+    rgba(200, 75, 22, 0.18) 156deg,
+    rgba(255, 138, 36, 0.08) 208deg,
+    rgba(255, 192, 107, 0.34) 268deg,
+    rgba(255, 138, 36, 0.12) 322deg,
+    rgba(255, 138, 36, 0) 360deg
+  );
+  -webkit-mask-image: radial-gradient(
+    closest-side,
+    transparent 63%,
+    #000 66%,
+    #000 69%,
+    transparent 72.5%
+  );
+  mask-image: radial-gradient(
+    closest-side,
+    transparent 63%,
+    #000 66%,
+    #000 69%,
+    transparent 72.5%
+  );
+  animation: aperture-spin 280s linear infinite;
+  will-change: transform;
+}
+
+/* One warm node on the ring, so the slow rotation reads as orbital motion. */
+.hero-field-ring::after {
   content: "";
   position: absolute;
-  right: -10%;
-  top: -40%;
-  width: 620px;
-  height: 620px;
+  inset: 0;
   border-radius: 50%;
-  border: 1px solid rgba(255, 182, 72, 0.1);
-  box-shadow:
-    0 0 0 70px rgba(255, 182, 72, 0.025),
-    0 0 0 150px rgba(99, 216, 255, 0.02);
-  pointer-events: none;
-  z-index: -1;
+  background: radial-gradient(
+    circle at 78.7% 32.1%,
+    rgba(255, 224, 186, 0.95) 0 1.5px,
+    rgba(255, 138, 36, 0.5) 2px,
+    rgba(255, 138, 36, 0) 7px
+  );
+}
+
+/* Inner highlight arc, counter-rotating for parallax depth. */
+.hero-field-inner {
+  position: absolute;
+  inset: 24%;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 180deg,
+    rgba(255, 192, 107, 0) 0deg,
+    rgba(255, 192, 107, 0.3) 40deg,
+    rgba(255, 192, 107, 0.55) 92deg,
+    rgba(255, 138, 36, 0.18) 150deg,
+    rgba(255, 192, 107, 0.05) 220deg,
+    rgba(255, 192, 107, 0.28) 300deg,
+    rgba(255, 192, 107, 0) 360deg
+  );
+  -webkit-mask-image: radial-gradient(
+    closest-side,
+    transparent 82%,
+    #000 92%,
+    #000 96%,
+    transparent 100%
+  );
+  mask-image: radial-gradient(
+    closest-side,
+    transparent 82%,
+    #000 92%,
+    #000 96%,
+    transparent 100%
+  );
+  animation: aperture-spin 380s linear infinite reverse;
+  will-change: transform;
+}
+
+@keyframes aperture-spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .hero h1 {
@@ -828,7 +933,7 @@ button:disabled {
 
 .brief-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 18px;
 }
 
@@ -2604,14 +2709,6 @@ dialog.salvage::backdrop {
 /* ---------------------------------------------------------------- responsive */
 
 @media (max-width: 1080px) {
-  .brief-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .col-span-2 {
-    grid-column: span 2;
-  }
-
   .build-grid {
     grid-template-columns: minmax(0, 1fr);
   }
@@ -2635,6 +2732,13 @@ dialog.salvage::backdrop {
 
   .verdict-grade strong {
     font-size: 84px;
+  }
+
+  .hero-field {
+    top: -280px;
+    right: -190px;
+    width: 700px;
+    height: 700px;
   }
 }
 
@@ -2677,8 +2781,12 @@ dialog.salvage::backdrop {
     font-size: clamp(48px, 16vw, 84px);
   }
 
-  .hero::after {
-    display: none;
+  .hero-field {
+    top: -200px;
+    right: -140px;
+    width: 520px;
+    height: 520px;
+    opacity: 0.8;
   }
 
   .hero-facts {
@@ -2801,6 +2909,14 @@ dialog.salvage::backdrop {
   .hero-actions .btn,
   .callout .btn {
     width: 100%;
+  }
+
+  .hero-field {
+    top: -200px;
+    right: -130px;
+    width: 360px;
+    height: 360px;
+    opacity: 0.45;
   }
 
   .weather-strip,

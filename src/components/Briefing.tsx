@@ -27,6 +27,11 @@ export function Briefing({
   return (
     <div className="screen briefing">
       <section className="hero">
+        <div className="hero-field" aria-hidden="true">
+          <span className="hero-field-glow" />
+          <span className="hero-field-ring" />
+          <span className="hero-field-inner" />
+        </div>
         <p className="eyebrow">NASA Space Apps 2026 · Mission design &amp; salvage</p>
         <h1>
           Dead
