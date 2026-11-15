@@ -179,9 +179,6 @@ hosts only. `npm run preview` serves the build with it, so test there before dep
 | --- | --- |
 | [`docs/demo/dead-reckoning-30s.mp4`](docs/demo/dead-reckoning-30s.mp4) | 30-second captioned demo for the submission (meets the 30-second limit) |
 | [`SUBMISSION.md`](SUBMISSION.md) | Copy-ready project page fields, references and NASA data list |
-| [`docs/demo/dead-reckoning-demo.mp4`](docs/demo/dead-reckoning-demo.mp4) | 2-minute captioned demo recorded from the production build: 3D assembly, the Grade S plan, all three faults with coaching, the S debrief |
-| [`DEMO_SCRIPT.md`](DEMO_SCRIPT.md) | 90-second recording script, timed shot by shot |
-| [`SLIDES.md`](SLIDES.md) | Slide-by-slide outline with speaker notes |
 | [`docs/ASSUMPTIONS.md`](docs/ASSUMPTIONS.md) | Every constant and mapping rule the model uses |
 
 ---
