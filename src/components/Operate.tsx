@@ -3,7 +3,20 @@ import { missionClockUtc } from '../sim/mission';
 import { SPEEDS } from '../app/useGame';
 import type { CausalEvent, MissionState } from '../sim/types';
 import { Bar, Chip, Panel } from './ui';
-import { OrbitView } from './OrbitView';
+import { lazy, Suspense, useState } from 'react';
+import { OrbitReadout, OrbitView } from './OrbitView';
+import { WebglBoundary } from '../three/WebglBoundary';
+import { webglAvailable } from '../three/util';
+import type { EarthSource } from '../three/Orbit3D';
+
+// three.js loads only when a mission is flying.
+const Orbit3D = lazy(() => import('../three/Orbit3D'));
+
+const EARTH_LABEL: Record<EarthSource, string> = {
+  loading: 'NASA GIBS · loading',
+  live: 'NASA GIBS · live',
+  bundled: 'NASA GIBS · offline copy',
+};
 import { Schedule } from './Schedule';
 import { Telemetry } from './Telemetry';
 import { SalvageDialog } from './SalvageDialog';
@@ -54,6 +67,8 @@ export function Operate({
   onResolve: (actionId: string) => void;
   onDebrief: () => void;
 }) {
+  const [earthSource, setEarthSource] = useState<EarthSource>('loading');
+  const [webgl] = useState(webglAvailable);
   const progress = state.t / state.durationSec;
   const finished = state.status === 'complete' || state.status === 'failed';
 
@@ -86,7 +101,7 @@ export function Operate({
               <button className="btn btn-ghost" onClick={() => onPause(!paused)}>
                 {paused ? 'Resume' : 'Pause'}
               </button>
-              <div className="speeds" role="group" aria-label="Simulation speed">
+              <div className="speeds" role="group" aria-label="Simulation speed" data-guide="speeds">
                 {SPEEDS.map((option) => (
                   <button
                     key={option}
@@ -120,15 +135,42 @@ export function Operate({
       {state.failureReason ? <p className="failure-banner">{state.failureReason}</p> : null}
 
       <div className="operate-grid">
-        <Panel title="Orbital geometry" subtitle="Propagated from real GP elements">
-          <OrbitView state={state.orbit} />
+        <Panel
+          title="Orbit"
+          subtitle="SGP4 from real CelesTrak elements · drag to rotate, scroll to zoom"
+          actions={<span className="mono dim small">{EARTH_LABEL[earthSource]}</span>}
+        >
+          {webgl ? (
+            <WebglBoundary fallback={<OrbitView state={state.orbit} />}>
+              <div className="stage stage-orbit" data-guide="orbit">
+                <Suspense fallback={null}>
+                  <Orbit3D
+                    reference={state.reference}
+                    tSec={state.t}
+                    inSunlight={state.inSunlight}
+                    contactStation={state.lastContactStation}
+                    onEarthSource={setEarthSource}
+                  />
+                </Suspense>
+                <div className="stage-legend" aria-hidden="true">
+                  <span><i className="key key-trail" /> last 25 min</span>
+                  <span><i className="key key-ahead" /> next orbit</span>
+                  <span><i className="key key-beam" /> downlink</span>
+                  <span className="dim">spacecraft not to scale</span>
+                </div>
+              </div>
+              <OrbitReadout state={state.orbit} />
+            </WebglBoundary>
+          ) : (
+            <OrbitView state={state.orbit} />
+          )}
         </Panel>
         <Panel title="Power &amp; data" subtitle="30 s telemetry downlink">
           <Telemetry state={state} />
         </Panel>
       </div>
 
-      <Panel title="Mission timeline" subtitle="Predicted passes, scene windows and decisions">
+      <Panel title="Mission timeline" subtitle="Predicted passes, scene windows and decisions" className="guide-schedule">
         <Schedule state={state} onSkip={onSkipScene} />
       </Panel>
 

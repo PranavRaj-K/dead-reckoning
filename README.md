@@ -7,7 +7,10 @@ cascading faults. Every choice spends mass, power or money — and every fault t
 The spacecraft is fictional. Its sunlight, eclipse timing, ground-station passes and ground track are
 propagated with **SGP4** from the real CelesTrak element set of **SENTINEL-2A (NORAD 40697)**.
 
-- No backend, no build-time API calls, no chart or UI libraries.
+- No backend, no build-time API calls, no chart or UI component libraries. 3D views use three.js.
+- The spacecraft is a 3D model that assembles part by part as you design it; the mission flies over a
+  3D Earth textured with NASA GIBS Blue Marble imagery.
+- A first-run walkthrough on every screen ("How to play" brings it back).
 - Runs fully offline from bundled snapshots.
 - Deterministic: the same seed and the same data always reproduce the same run.
 
@@ -28,7 +31,7 @@ Other scripts:
 | --- | --- |
 | `npm run build` | Type-checks (`tsc -b`) then builds to `dist/` |
 | `npm run preview` | Serves the production build locally |
-| `npm test` | Runs the Vitest suite (98 unit tests, no DOM) |
+| `npm test` | Runs the Vitest suite (102 unit tests, no DOM) |
 | `npm run lint` | Runs oxlint |
 
 No environment file is needed. To supply your own keys, copy `.env.example` to `.env.local`.
@@ -58,11 +61,15 @@ shortcut keys.
 | --- | --- | --- |
 | CelesTrak GP / OMM JSON | `gp.php?CATNR=40697&FORMAT=json` | Orbital elements for SGP4 propagation |
 | NASA DONKI GST / SEP / FLR | `api.nasa.gov/DONKI/*` | Bounded space-weather modifiers |
+| NASA GIBS WMS | `gibs.earthdata.nasa.gov` `BlueMarble_ShadedRelief_Bathymetry` | Earth texture for the 3D orbit view (bundled copy offline) |
 
 Each source resolves in this order, and the UI always states which one answered:
 
 1. **LIVE** — fetched over HTTPS with an 8 s timeout and full payload validation.
-2. **CACHED** — the last good response from `localStorage`, with its real age in seconds.
+2. **CACHED** — a stored copy with its real age: the last good response from `localStorage`, or the
+   bundled snapshot. A live copy younger than 2 hours (CelesTrak) or 1 hour (DONKI) is reused instead of
+   re-fetched, because CelesTrak blocks faster re-downloads and `DEMO_KEY` is rate-limited. The badge note
+   says which case applies.
 3. **ERROR** — nothing usable. The UI says so; the mission cannot launch without an element set.
 
 A partially failed weather fetch is a normal state, not a hidden error: DONKI's `FLR` endpoint has been
@@ -126,7 +133,8 @@ src/
     catalogue.ts        components, presets, scenario definition
     events.ts           DONKI records -> bounded game modifiers
   data/                 HTTP adapters, validation, cache, bundled snapshots
-  components/           briefing, workbench, operations, debrief, SVG orbit view
+  components/           briefing, workbench, operations, debrief, walkthrough, 2D fallbacks
+  three/                3D spacecraft assembly and 3D orbit (lazy-loaded; 2D fallback without WebGL)
   styles/app.css        the whole visual system (no CSS framework)
   tests/                Vitest unit tests
 scripts/                snapshot refresh tool
@@ -145,8 +153,12 @@ npm run build
 ```
 
 No server, no runtime configuration, no redirects are required. Cross-origin requests go directly to
-CelesTrak and `api.nasa.gov`, both of which allow browser access; if a network blocks them, the app falls
-back to CACHED and still plays.
+CelesTrak, `api.nasa.gov` and NASA GIBS, all of which allow browser access; if a network blocks them, the
+app falls back to CACHED and still plays.
+
+The production `index.html` carries a Content-Security-Policy `<meta>` tag (added at build time in
+`vite.config.ts`) that allows scripts from the app's own origin only and network access to those three
+hosts only. `npm run preview` serves the build with it, so test there before deploying.
 
 ---
 
@@ -162,9 +174,11 @@ back to CACHED and still plays.
 
 ## Attribution
 
-Orbital propagation by [satellite.js](https://github.com/shashwatak/satellite-js). Element sets from
+Orbital propagation by [satellite.js](https://github.com/shashwatak/satellite-js). 3D rendering by
+[three.js](https://threejs.org) and [React Three Fiber](https://r3f.docs.pmnd.rs). Element sets from
 [CelesTrak](https://celestrak.org). Space-weather events from NASA's
-[DONKI](https://kauai.ccmc.gsfc.nasa.gov/DONKI/). Built for NASA Space Apps 2026.
+[DONKI](https://kauai.ccmc.gsfc.nasa.gov/DONKI/). Earth imagery from NASA's
+[GIBS](https://nasa-gibs.github.io/gibs-api-docs/) (Blue Marble, public domain). Built for NASA Space Apps 2026.
 
 Display face: **Chakra Petch** by Cadson Demak, [SIL Open Font License 1.1](src/assets/fonts/OFL.txt).
 Self-hosted so the app keeps its typography offline.

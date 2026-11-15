@@ -3,7 +3,7 @@
  * mission clock. The simulation itself stays pure; this hook just feeds it.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { DEFAULT_DESIGN, PRESETS, SCENARIO } from '../sim/catalogue';
+import { COMPONENTS, DEFAULT_DESIGN, PRESETS, SCENARIO, SLOT_ORDER } from '../sim/catalogue';
 import {
   TICK_SEC,
   advanceMission,
@@ -37,12 +37,30 @@ const TICK_MS = 100;
 export const SPEEDS = [60, 300, 900] as const;
 export const DEFAULT_SEED = 20261115;
 
+const KNOWN_PARTS = new Set(COMPONENTS.map((part) => part.id));
+
+/** Storage is outside our control: drop any saved run the debrief could not render. */
+export function isRunRecord(value: unknown): value is RunRecord {
+  const run = value as RunRecord | null;
+  return (
+    typeof run === 'object' &&
+    run !== null &&
+    typeof run.seed === 'number' &&
+    typeof run.finishedAtUtc === 'string' &&
+    typeof run.design?.ids === 'object' &&
+    SLOT_ORDER.every((slot) => KNOWN_PARTS.has(run.design.ids[slot])) &&
+    typeof run.result?.grade === 'string' &&
+    typeof run.result.status === 'string' &&
+    [run.result.score, run.result.scienceDelivered, run.result.dataDeliveredMb].every(Number.isFinite)
+  );
+}
+
 function readRuns(): RunRecord[] {
   try {
     const raw = window.localStorage.getItem(RUNS_KEY);
     if (!raw) return [];
-    const parsed = JSON.parse(raw) as RunRecord[];
-    return Array.isArray(parsed) ? parsed : [];
+    const parsed: unknown = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed.filter(isRunRecord) : [];
   } catch {
     return [];
   }

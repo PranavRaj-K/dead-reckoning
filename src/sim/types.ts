@@ -285,6 +285,8 @@ export interface SceneRecord {
   scienceTotal: number;
   scienceDelivered: number;
   mbRemaining: number;
+  /** The instrument lost power at some point during this scene's window. */
+  shed: boolean;
   note: string | null;
 }
 

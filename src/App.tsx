@@ -1,7 +1,9 @@
+import { useEffect } from 'react';
 import { useGame } from './app/useGame';
 import { Briefing } from './components/Briefing';
 import { Build } from './components/Build';
 import { Debrief } from './components/Debrief';
+import { Guide } from './components/Guide';
 import { Operate } from './components/Operate';
 import { TopBar } from './components/TopBar';
 
@@ -52,6 +54,11 @@ function Boot({ error, onRetry }: { error: string | null; onRetry: () => void })
 
 function App() {
   const game = useGame();
+
+  // Each screen starts at its top, not wherever the previous one was scrolled.
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [game.screen]);
 
   if (!game.env) {
     return (
@@ -121,6 +128,8 @@ function App() {
           </div>
         ) : null}
       </main>
+
+      <Guide key={game.screen} screen={game.screen} blocked={mission?.status === 'awaiting-salvage'} />
 
       <footer className="footer">
         <span>Dead Reckoning · NASA Space Apps 2026</span>

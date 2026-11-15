@@ -85,7 +85,13 @@ export function OrbitView({ state }: { state: OrbitState }) {
           schematic · not to scale
         </text>
       </svg>
+      <OrbitReadout state={state} />
+    </div>
+  );
+}
 
+export function OrbitReadout({ state }: { state: OrbitState }) {
+  return (
       <dl className="orbit-readout">
         <div>
           <dt>State</dt>
@@ -116,6 +122,5 @@ export function OrbitView({ state }: { state: OrbitState }) {
           <dd className="mono">{num(state.radiusEarthRadii, 3)} R⊕</dd>
         </div>
       </dl>
-    </div>
   );
 }

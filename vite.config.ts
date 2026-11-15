@@ -29,10 +29,42 @@ function stubSatelliteWasm(): Plugin {
   }
 }
 
+/**
+ * Content Security Policy for the production build only: the dev server injects
+ * an inline React Refresh script that a strict policy would block. Hosts listed
+ * are the only network sources the app uses (CelesTrak, NASA DONKI, NASA GIBS).
+ */
+const CSP = [
+  "default-src 'self'",
+  "script-src 'self'",
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' data: blob: https://gibs.earthdata.nasa.gov",
+  "font-src 'self'",
+  "connect-src 'self' https://celestrak.org https://api.nasa.gov https://gibs.earthdata.nasa.gov",
+  "object-src 'none'",
+  "base-uri 'none'",
+  "form-action 'none'",
+].join('; ')
+
+function contentSecurityPolicy(): Plugin {
+  return {
+    name: 'content-security-policy',
+    apply: 'build',
+    transformIndexHtml(html) {
+      return html.replace('<meta charset="UTF-8" />', `<meta charset="UTF-8" />
+    <meta http-equiv="Content-Security-Policy" content="${CSP}" />`)
+    },
+  }
+}
+
 // Relative base so the build works on any static host or subdirectory.
 export default defineConfig({
   base: './',
-  plugins: [react(), stubSatelliteWasm()],
+  build: {
+    // The lazy three.js chunk (~940 kB) loads only when a 3D view appears; the entry stays ~355 kB.
+    chunkSizeWarningLimit: 1000,
+  },
+  plugins: [react(), stubSatelliteWasm(), contentSecurityPolicy()],
   test: {
     environment: 'node',
     include: ['src/tests/**/*.test.ts'],

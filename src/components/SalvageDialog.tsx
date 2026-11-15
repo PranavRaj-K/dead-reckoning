@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 import { clock } from '../lib/format';
 import { faultCopy, getRecoveryActions } from '../sim/salvage';
 import type { MissionState } from '../sim/types';
-import { Chip } from './ui';
+import { Bar, Chip, Info } from './ui';
 
 /**
  * Fault resolution is a modal decision on purpose: the clock stops, and the
@@ -54,28 +54,49 @@ export function SalvageDialog({
                   <li key={symptom}>{symptom}</li>
                 ))}
               </ul>
-              <h3 className="subhead">Why this is happening</h3>
-              <p className="note">{copy.causeHint}</p>
-              <dl className="salvage-state">
-                <div>
-                  <dt>Battery</dt>
-                  <dd className="mono">
-                    {state.batteryWh.toFixed(1)} / {state.batteryCapacityWh.toFixed(1)} Wh
-                  </dd>
+              <div className="tile-row salvage-tiles">
+                <div className="tile">
+                  <span className="stat-label">Battery</span>
+                  <span className="stat-value">
+                    {state.batteryWh.toFixed(1)}
+                    <small>/ {state.batteryCapacityWh.toFixed(0)} Wh</small>
+                  </span>
+                  <Bar
+                    ratio={state.batteryCapacityWh > 0 ? state.batteryWh / state.batteryCapacityWh : 0}
+                    tone={state.batteryWh / state.batteryCapacityWh < 0.3 ? 'bad' : 'ok'}
+                    label="Battery charge"
+                  />
                 </div>
-                <div>
-                  <dt>Recorder</dt>
-                  <dd className="mono">{state.dataStoredMb.toFixed(1)} MB stored</dd>
+                <div className="tile">
+                  <span className="stat-label">Recorder</span>
+                  <span className="stat-value">
+                    {state.dataStoredMb.toFixed(0)}
+                    <small>/ {state.budgets.storageMb} MB</small>
+                  </span>
+                  <Bar
+                    ratio={state.budgets.storageMb > 0 ? state.dataStoredMb / state.budgets.storageMb : 0}
+                    tone={state.dataStoredMb / state.budgets.storageMb > 0.8 ? 'warn' : 'info'}
+                    label="Recorder fill"
+                  />
                 </div>
-                <div>
-                  <dt>Science</dt>
-                  <dd className="mono">{state.scienceDelivered.toFixed(1)} delivered</dd>
+                <div className="tile">
+                  <span className="stat-label">Science</span>
+                  <span className="stat-value">
+                    {state.scienceDelivered.toFixed(1)}
+                    <small>/ {state.scienceTarget}</small>
+                  </span>
+                  <Bar ratio={state.scienceDelivered / state.scienceTarget} tone="ok" label="Science delivered" />
                 </div>
-                <div>
-                  <dt>Scenes left</dt>
-                  <dd className="mono">{state.scenes.filter((scene) => scene.status === 'pending').length}</dd>
+                <div className="tile">
+                  <span className="stat-label">Scenes left</span>
+                  <span className="stat-value">
+                    {state.scenes.filter((scene) => scene.status === 'pending').length}
+                  </span>
                 </div>
-              </dl>
+              </div>
+              <Info label="Why this is happening">
+                <p>{copy.causeHint}</p>
+              </Info>
             </div>
 
             <div>
@@ -98,7 +119,7 @@ export function SalvageDialog({
                         {action.endsMission ? <Chip tone="bad">ends mission</Chip> : null}
                       </span>
                       <span className="action-desc">{action.description}</span>
-                      <span className="action-tradeoff">Trade-off: {action.tradeoff}</span>
+                      <span className="action-tradeoff">{action.tradeoff}</span>
                       {action.unavailableReason ? (
                         <span className="action-blocked">{action.unavailableReason}</span>
                       ) : null}
@@ -106,9 +127,6 @@ export function SalvageDialog({
                   );
                 })}
               </div>
-              <p className="note small">
-                The mission clock is stopped. Nothing advances until you choose a path.
-              </p>
             </div>
           </div>
         </div>

@@ -106,6 +106,7 @@ export function createMission(input: MissionInput): MissionState {
     scienceTotal: 0,
     scienceDelivered: 0,
     mbRemaining: 0,
+    shed: false,
     note: null,
   }));
 
@@ -325,14 +326,20 @@ function stepOnce(state: MissionState, dtSec: number): MissionState {
     powerGenW: power.generationW,
     powerLoadW: power.loadW,
     batteryWh: power.batteryWh,
-    brownout: power.brownout || state.brownout,
+    // Live flag: a recharged battery ends the brownout (it used to latch until failure).
+    brownout: power.brownout,
     pointingErrorDeg: pointing,
     linkGainFactor: state.budgets.effectiveGain,
     lastContactId: contact?.id ?? null,
     lastContactStation: contact?.stationName ?? null,
   };
 
-  if (activeSceneIndex >= 0 && (power.shedInstrument || power.brownout)) {
+  // A camera that lost power mid-window cannot deliver a full-quality scene. Log once per scene.
+  if (activeSceneIndex >= 0 && (power.shedInstrument || power.brownout) && !state.scenes[activeSceneIndex].shed) {
+    next = {
+      ...next,
+      scenes: next.scenes.map((scene, i) => (i === activeSceneIndex ? { ...scene, shed: true } : scene)),
+    };
     next = logCausal(next, 'warning', 'warning', 'Instrument shed to protect power', {
       scene: state.scenes[activeSceneIndex].label,
       reason: power.brownout ? 'battery empty' : 'degraded battery discharge limit',
@@ -416,7 +423,8 @@ function captureScene(state: MissionState, index: number): MissionState {
   const cloud = 0.65 + 0.35 * seededUnit(state.seed, 'cloud', index);
   const pointingFactor = state.pointingErrorDeg > (instrument.maxPointingDeg ?? 99) ? 0.5 : 1;
   const radiationFactor = 1 - 0.25 * state.weather.radiationNoise;
-  const quality = state.brownout ? 0.05 : clamp(cloud * pointingFactor * radiationFactor, 0.05, 1);
+  const shed = state.brownout || state.scenes[index].shed;
+  const quality = shed ? 0.05 : clamp(cloud * pointingFactor * radiationFactor, 0.05, 1);
   const scienceTotal = round((instrument.scienceValue ?? 0) * quality, 2);
 
   let scenes = state.scenes.map((scene, i) =>
@@ -428,10 +436,10 @@ function captureScene(state: MissionState, index: number): MissionState {
           scienceTotal,
           mbRemaining: dataMb,
           note:
-            pointingFactor < 1
-              ? 'Captured outside the instrument pointing spec (50% science)'
-              : state.brownout
-                ? 'Captured during a brownout'
+            shed
+              ? 'Instrument lost power during the window'
+              : pointingFactor < 1
+                ? 'Captured outside the instrument pointing spec (50% science)'
                 : null,
         }
       : scene,

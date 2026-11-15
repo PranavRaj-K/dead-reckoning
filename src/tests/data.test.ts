@@ -14,7 +14,7 @@ import {
 import { donkiUrl } from '../data/nasaDonki';
 import { celestrakGpUrl } from '../data/celestrak';
 import { loadEnvironment, provenanceLines, resetEnvironment } from '../data/loadEnvironment';
-import { REFERENCE_NORAD_ID } from '../sim/catalogue';
+import { DEFAULT_DESIGN, REFERENCE_NORAD_ID } from '../sim/catalogue';
 
 interface Envelope {
   payload: unknown;
@@ -222,3 +222,56 @@ function response(payload: unknown) {
     json: () => Promise.resolve(payload),
   };
 }
+
+describe('saved run validation', () => {
+  it('keeps a well-formed run and drops ones the debrief could not render', async () => {
+    const { isRunRecord } = await import('../app/useGame');
+    const good = {
+      seed: 1,
+      finishedAtUtc: '2026-11-15T00:00:00.000Z',
+      design: DEFAULT_DESIGN,
+      result: { grade: 'B', status: 'PARTIAL', score: 72, scienceDelivered: 30, dataDeliveredMb: 40 },
+    };
+    expect(isRunRecord(good)).toBe(true);
+    expect(isRunRecord({ ...good, design: { ...DEFAULT_DESIGN, ids: { ...DEFAULT_DESIGN.ids, instrument: 'gone' } } })).toBe(false);
+    expect(isRunRecord({ ...good, result: { ...good.result, score: 'NaN' } })).toBe(false);
+    expect(isRunRecord(null)).toBe(false);
+  });
+});
+
+describe('polite polling', () => {
+  function memoryStorage(): Storage {
+    const map = new Map<string, string>();
+    return {
+      get length() {
+        return map.size;
+      },
+      clear: () => map.clear(),
+      getItem: (key) => map.get(key) ?? null,
+      key: (i) => [...map.keys()][i] ?? null,
+      removeItem: (key) => void map.delete(key),
+      setItem: (key, value) => void map.set(key, String(value)),
+    };
+  }
+
+  it('reuses a live copy younger than the reuse window instead of re-fetching, and drops a corrupt one', async () => {
+    const localStorage = memoryStorage();
+    vi.stubGlobal('window', { localStorage });
+    const fetchMock = vi.fn((_url: string) => Promise.reject(new Error('offline')));
+    vi.stubGlobal('fetch', fetchMock);
+
+    const elements = normalizeGp((gpBundle as { payload: unknown }).payload, REFERENCE_NORAD_ID);
+    const fresh = new Date(Date.now() - 10 * 60_000).toISOString();
+    localStorage.setItem('dead-reckoning:v1:celestrak-gp', JSON.stringify({ fetchedAtUtc: fresh, sourceUrl: 'x', payload: elements }));
+    localStorage.setItem('dead-reckoning:v1:donki-weather', JSON.stringify({ fetchedAtUtc: fresh, sourceUrl: 'y', payload: { flares: 'bad' } }));
+
+    const bundle = await loadEnvironment();
+    expect(bundle.gp.status).toBe('cached');
+    expect(bundle.gp.error).toContain('Reusing');
+    expect(bundle.gp.fetchedAtUtc).toBe(fresh);
+    // GP never hit the network; the corrupt weather entry was ignored and DONKI was tried.
+    expect(fetchMock.mock.calls.some(([url]) => String(url).includes('gp.php'))).toBe(false);
+    expect(fetchMock.mock.calls.some(([url]) => String(url).includes('DONKI'))).toBe(true);
+    expect(bundle.weather.payload?.flares).toBeInstanceOf(Array);
+  });
+});

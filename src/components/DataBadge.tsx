@@ -22,7 +22,7 @@ export function DataBadge<T>({ label, data }: { label: string; data: DataSnapsho
             {data.status === 'live'
               ? 'Fetched directly from the public API in this browser session.'
               : data.status === 'cached'
-                ? 'Live fetch did not succeed. Showing a previously stored snapshot, not live data.'
+                ? 'A stored copy, not fetched on this page load. The note says why.'
                 : 'No live response and no usable snapshot.'}
           </dd>
           <dt>Source</dt>

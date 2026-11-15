@@ -53,7 +53,7 @@ intended source of recorder pressure.
 | Science target | 50 points |
 | Data target | 60 MB delivered |
 | Injected faults | Radio at 6,480 s, ADCS at 11,880 s, battery at 16,848 s |
-| Brownout failure | **600 s** of cumulative brownout ends the mission |
+| Brownout failure | **600 s** of continuous brownout ends the mission; recharging above empty ends the brownout and resets the count |
 
 Faults fire on fixed mission times so that runs are comparable; the fault *consequences* depend on the
 design the player built. Time is integrated in fixed steps and is chunk-invariant: advancing 3 × 300 s
@@ -99,7 +99,8 @@ produces exactly the same state as 30 × 30 s.
   - `cloud = 0.65 + 0.35 × seededUnit(seed, 'cloud', sceneIndex)`.
   - Pointing factor is 0.5 when the pointing error exceeds the instrument's rating, otherwise 1.
   - Radiation factor is `1 − 0.25 × radiationNoise`, so sensor noise costs at most 25% of quality.
-  - A capture during a brownout is fixed at 0.05.
+  - A scene whose instrument lost power at any point in its window (brownout, or shed by the degraded
+    battery's discharge limit) is fixed at 0.05.
 - Scene science = `instrument science value × quality`.
 
 ---

@@ -28,6 +28,60 @@ interface Envelope {
   payload: unknown;
 }
 
+/** Cached entries are re-checked: storage can hold an old format or a hand-edited value. */
+function isGpElements(value: unknown): value is GpElements {
+  const gp = value as GpElements | null;
+  return (
+    typeof gp === 'object' &&
+    gp !== null &&
+    typeof gp.objectName === 'string' &&
+    typeof gp.epochUtc === 'string' &&
+    Number.isFinite(Date.parse(gp.epochUtc)) &&
+    gp.noradId === REFERENCE_NORAD_ID &&
+    gp.meanMotionRevPerDay > 0 &&
+    gp.eccentricity >= 0 &&
+    gp.eccentricity < 1 &&
+    [gp.inclinationDeg, gp.raanDeg, gp.argPerigeeDeg, gp.meanAnomalyDeg, gp.bstar].every(Number.isFinite)
+  );
+}
+
+function isSpaceWeather(value: unknown): value is SpaceWeather {
+  const weather = value as SpaceWeather | null;
+  return (
+    typeof weather === 'object' &&
+    weather !== null &&
+    Array.isArray(weather.flares) &&
+    weather.flares.every((flare) => typeof flare?.classType === 'string' && typeof flare.beginUtc === 'string') &&
+    Array.isArray(weather.storms) &&
+    weather.storms.every((storm) => Number.isFinite(storm?.maxKp) && typeof storm.startUtc === 'string') &&
+    Array.isArray(weather.seps) &&
+    typeof weather.windowStartUtc === 'string' &&
+    typeof weather.windowEndUtc === 'string'
+  );
+}
+
+/**
+ * Polite polling. CelesTrak refreshes elements every 2 hours and answers 403 to
+ * clients that re-download sooner; DEMO_KEY allows about 30 DONKI calls an hour.
+ * A recent good copy is reused instead of fetched, and labelled as stored.
+ */
+const GP_REUSE_SEC = 2 * 3600;
+const WEATHER_REUSE_SEC = 3600;
+
+function ageSec(fetchedAtUtc: string): number {
+  return (Date.now() - Date.parse(fetchedAtUtc)) / 1000;
+}
+
+function storedGp() {
+  const stored = readCache<unknown>(GP_CACHE_KEY);
+  return stored && isGpElements(stored.payload) ? { fetchedAtUtc: stored.fetchedAtUtc, sourceUrl: stored.sourceUrl, payload: stored.payload } : null;
+}
+
+function storedWeather() {
+  const stored = readCache<unknown>(WEATHER_CACHE_KEY);
+  return stored && isSpaceWeather(stored.payload) ? { fetchedAtUtc: stored.fetchedAtUtc, sourceUrl: stored.sourceUrl, payload: stored.payload } : null;
+}
+
 const GP_CACHE_KEY = 'celestrak-gp';
 const WEATHER_CACHE_KEY = 'donki-weather';
 
@@ -86,6 +140,10 @@ function newerOf<T>(
 
 async function loadGp(): Promise<DataSnapshot<GpElements>> {
   const url = celestrakGpUrl(REFERENCE_NORAD_ID);
+  const recent = storedGp();
+  if (recent && ageSec(recent.fetchedAtUtc) < GP_REUSE_SEC) {
+    return snapshot('cached', CELESTRAK_SOURCE, recent.sourceUrl, recent.fetchedAtUtc, recent.payload, 'Reusing the live copy from under 2 hours ago. CelesTrak updates every 2 hours and blocks faster re-downloads.');
+  }
   try {
     const elements = await fetchGp(REFERENCE_NORAD_ID);
     const fetchedAtUtc = new Date().toISOString();
@@ -93,11 +151,7 @@ async function loadGp(): Promise<DataSnapshot<GpElements>> {
     return snapshot('live', CELESTRAK_SOURCE, url, fetchedAtUtc, elements);
   } catch (error) {
     const reason = error instanceof Error ? error.message : String(error);
-    const cached = readCache<GpElements>(GP_CACHE_KEY);
-    const chosen = newerOf(
-      cached ? { fetchedAtUtc: cached.fetchedAtUtc, payload: cached.payload, sourceUrl: cached.sourceUrl } : null,
-      bundledGp(),
-    );
+    const chosen = newerOf(storedGp(), bundledGp());
     if (chosen) {
       return snapshot('cached', CELESTRAK_SOURCE, chosen.sourceUrl, chosen.fetchedAtUtc, chosen.payload, `Live fetch failed (${reason}). Using a stored snapshot.`);
     }
@@ -107,6 +161,10 @@ async function loadGp(): Promise<DataSnapshot<GpElements>> {
 
 async function loadWeather(): Promise<DataSnapshot<SpaceWeather>> {
   const apiKey = import.meta.env.VITE_NASA_API_KEY ?? 'DEMO_KEY';
+  const recent = storedWeather();
+  if (recent && ageSec(recent.fetchedAtUtc) < WEATHER_REUSE_SEC) {
+    return snapshot('cached', DONKI_SOURCE, recent.sourceUrl, recent.fetchedAtUtc, recent.payload, 'Reusing the live copy from under an hour ago, to stay inside the NASA API rate limit.');
+  }
   try {
     const result = await fetchWeather(apiKey);
     const fetchedAtUtc = new Date().toISOString();
@@ -122,11 +180,7 @@ async function loadWeather(): Promise<DataSnapshot<SpaceWeather>> {
     );
   } catch (error) {
     const reason = error instanceof Error ? error.message : String(error);
-    const cached = readCache<SpaceWeather>(WEATHER_CACHE_KEY);
-    const chosen = newerOf(
-      cached ? { fetchedAtUtc: cached.fetchedAtUtc, payload: cached.payload, sourceUrl: cached.sourceUrl } : null,
-      bundledWeather(),
-    );
+    const chosen = newerOf(storedWeather(), bundledWeather());
     if (chosen) {
       return snapshot('cached', DONKI_SOURCE, chosen.sourceUrl, chosen.fetchedAtUtc, chosen.payload, `Live fetch failed (${reason}). Using a stored snapshot.`);
     }

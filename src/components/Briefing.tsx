@@ -1,9 +1,30 @@
-import { useMemo } from 'react';
+import { lazy, Suspense, useMemo, useState } from 'react';
 import type { EnvironmentBundle } from '../data/loadEnvironment';
 import { age, num, stamp } from '../lib/format';
-import { REFERENCE_NORAD_ID, SCENARIO, STATIONS } from '../sim/catalogue';
+import { DEFAULT_DESIGN, REFERENCE_NORAD_ID, SCENARIO, STATIONS } from '../sim/catalogue';
 import { createSatrec, dateAt, orbitStateAt } from '../sim/orbit';
-import { Panel } from './ui';
+import { WebglBoundary } from '../three/WebglBoundary';
+import { webglAvailable } from '../three/util';
+import { MissionTimeline } from './MissionTimeline';
+import { Info, Panel } from './ui';
+
+const Spacecraft3D = lazy(() => import('../three/Spacecraft3D'));
+
+/** Each claim is a chip; the full sentence is one tap away. */
+const REALITY = {
+  real: [
+    { label: 'Orbit', detail: `CelesTrak GP/OMM elements for NORAD ${REFERENCE_NORAD_ID}, fetched live where possible.` },
+    { label: 'SGP4 propagation', detail: 'Sunlight, eclipse, station passes and ground track come from that real orbit.' },
+    { label: 'Space weather', detail: 'NASA DONKI flare, geomagnetic-storm and SEP event records.' },
+    { label: 'Sun position', detail: 'satellite.js solar ephemeris, used for the eclipse test.' },
+  ],
+  modelled: [
+    { label: 'Part specs', detail: 'Mass, cost, power, storage and data rates are illustrative, order-of-magnitude values.' },
+    { label: 'Imaging windows', detail: 'Scenes are fixed mission-time windows, not real target coordinates.' },
+    { label: 'Weather effects', detail: 'Bounded rules (sensor noise, watts, degrees), not physics.' },
+    { label: 'Dice rolls', detail: 'Cloud cover and risky recoveries use a seeded PRNG, so runs replay exactly.' },
+  ],
+} as const;
 
 export function Briefing({
   env,
@@ -14,6 +35,9 @@ export function Briefing({
 }) {
   const gp = env.gp.payload;
   const weather = env.weather.payload;
+  const [side, setSide] = useState<keyof typeof REALITY>('real');
+  const [claim, setClaim] = useState<string | null>(null);
+  const [webgl] = useState(webglAvailable);
 
   const orbit = useMemo(() => {
     if (!gp) return null;
@@ -24,25 +48,20 @@ export function Briefing({
     }
   }, [gp]);
 
+  const claims = REALITY[side];
+  const activeClaim = claims.find((entry) => entry.label === claim) ?? null;
+
   return (
     <div className="screen briefing">
       <section className="hero">
-        <div className="hero-field" aria-hidden="true">
-          <span className="hero-field-glow" />
-          <span className="hero-field-ring" />
-          <span className="hero-field-inner" />
-        </div>
+        <div className="hero-copy">
         <p className="eyebrow">NASA Space Apps 2026 · Mission design &amp; salvage</p>
         <h1>
           Dead
           <br />
           Reckoning
         </h1>
-        <p className="lede">
-          Design a 3U Earth-observation spacecraft, fly it for six hours against propagated
-          orbital geometry, and keep it alive when the hardware starts failing. Every choice
-          spends mass, power or money — and every fault traces back to one of them.
-        </p>
+        <p className="lede">Build a CubeSat. Fly it for six hours. Keep it alive when it breaks.</p>
         <div className="hero-actions">
           <button className="btn btn-primary" onClick={onStart}>
             Design the spacecraft
@@ -69,129 +88,161 @@ export function Briefing({
             <dd className="mono">3</dd>
           </div>
         </dl>
+        </div>
+        {webgl ? (
+          <div className="hero-craft" aria-label="3D model of the default spacecraft assembling" role="img">
+            <WebglBoundary fallback={null}>
+              <Suspense fallback={null}>
+                <Spacecraft3D design={DEFAULT_DESIGN} focus={null} runKey={0} />
+              </Suspense>
+            </WebglBoundary>
+          </div>
+        ) : null}
       </section>
+
+      <Panel title="Your six hours" subtitle="Image the targets, downlink the data, survive what breaks">
+        <MissionTimeline scenario={SCENARIO} />
+      </Panel>
 
       <div className="brief-grid">
         <Panel
           title="Reference orbit"
           subtitle={gp ? `${gp.objectName} · NORAD ${gp.noradId}` : 'Unavailable'}
-          className="col-span-2"
+          actions={<span className={`status-text s-${env.gp.status}`}>{env.gp.status.toUpperCase()}</span>}
         >
           {gp ? (
             <>
-              <dl className="data-list">
-                <div>
-                  <dt>Element epoch</dt>
-                  <dd className="mono">{stamp(gp.epochUtc)}</dd>
+              <div className="tile-row">
+                <div className="tile">
+                  <span className="stat-label">Altitude</span>
+                  <span className="stat-value">
+                    {orbit ? num(orbit.altitudeKm) : '—'}
+                    <small>km</small>
+                  </span>
                 </div>
-                <div>
-                  <dt>Orbit period</dt>
-                  <dd className="mono">{(1440 / gp.meanMotionRevPerDay).toFixed(1)} min</dd>
+                <div className="tile">
+                  <span className="stat-label">Period</span>
+                  <span className="stat-value">
+                    {(1440 / gp.meanMotionRevPerDay).toFixed(1)}
+                    <small>min</small>
+                  </span>
                 </div>
-                <div>
-                  <dt>Inclination</dt>
-                  <dd className="mono">{num(gp.inclinationDeg, 2)}°</dd>
+                <div className="tile">
+                  <span className="stat-label">Inclination</span>
+                  <span className="stat-value">
+                    {num(gp.inclinationDeg, 1)}
+                    <small>°</small>
+                  </span>
                 </div>
-                <div>
-                  <dt>Altitude at epoch</dt>
-                  <dd className="mono">{orbit ? `${num(orbit.altitudeKm)} km` : '—'}</dd>
-                </div>
-                <div>
-                  <dt>Snapshot</dt>
-                  <dd>
-                    <span className={`status-text s-${env.gp.status}`}>{env.gp.status.toUpperCase()}</span>
-                    <span className="dim"> · {age(env.gp.ageSeconds)} old</span>
-                  </dd>
-                </div>
-                <div>
-                  <dt>Source</dt>
-                  <dd className="mono small break">{env.gp.sourceUrl}</dd>
-                </div>
-              </dl>
-              <p className="note">
-                The spacecraft is fictional. Its sunlight, eclipse, ground-station visibility and
-                ground track are propagated with SGP4 from this real element set. The reference
-                object is not part of the mission and is not being flown.
-              </p>
+              </div>
+              <Info label="Source and caveats">
+                <p>
+                  Epoch {stamp(gp.epochUtc)}, {age(env.gp.ageSeconds)} old.
+                </p>
+                <p className="mono small break">{env.gp.sourceUrl}</p>
+                <p>
+                  The spacecraft is fictional. Its sunlight, eclipse, station visibility and ground
+                  track are propagated with SGP4 from this real element set.
+                </p>
+              </Info>
             </>
           ) : (
             <p className="warn-text">No element set was available. Reload or retry the data fetch.</p>
           )}
         </Panel>
 
-        <Panel title="Space weather" subtitle={weather ? 'NASA DONKI event window' : 'Unavailable'}>
+        <Panel
+          title="Space weather"
+          subtitle={weather ? 'NASA DONKI, last 30 days' : 'Unavailable'}
+          actions={<span className={`status-text s-${env.weather.status}`}>{env.weather.status.toUpperCase()}</span>}
+        >
           {weather ? (
             <>
-              <div className="weather-strip">
-                <div>
+              <div className="tile-row">
+                <div className="tile">
                   <span className="stat-label">Flares</span>
                   <span className="stat-value">{weather.flares.length}</span>
                 </div>
-                <div>
+                <div className="tile">
                   <span className="stat-label">Storms</span>
                   <span className="stat-value">{weather.storms.length}</span>
                 </div>
-                <div>
-                  <span className="stat-label">SEP events</span>
+                <div className="tile">
+                  <span className="stat-label">SEP</span>
                   <span className="stat-value">{weather.seps.length}</span>
                 </div>
               </div>
-              <p className="note">
-                Window {weather.windowStartUtc.slice(0, 10)} to {weather.windowEndUtc.slice(0, 10)}.
-                DONKI records are event classes and Kp indices; the game maps them to bounded
-                sensor-noise and power penalties. They are not a radiation dose.
-              </p>
               {env.weather.error ? <p className="warn-text small">{env.weather.error}</p> : null}
+              <Info label="How weather affects the run">
+                <p>
+                  Window {weather.windowStartUtc.slice(0, 10)} to {weather.windowEndUtc.slice(0, 10)}.
+                  DONKI records are event classes and Kp indices. The game maps them to bounded
+                  sensor-noise and power penalties, not a radiation dose.
+                </p>
+              </Info>
             </>
           ) : (
             <p className="warn-text">No weather snapshot was available.</p>
           )}
         </Panel>
 
-        <Panel title="Ground stations" subtitle="Reference coordinates, 5° elevation mask">
-          <ul className="station-list">
+        <Panel title="Ground stations" subtitle="Where your data comes down" className="col-span-2">
+          <ul className="station-chips">
             {STATIONS.map((station) => (
               <li key={station.id}>
-                <span>{station.name}</span>
+                <span className="station-dot" aria-hidden="true" />
+                <strong>{station.name.replace(' (reference site)', '')}</strong>
                 <span className="mono dim">
-                  {station.latDeg.toFixed(2)}°, {station.lonDeg.toFixed(2)}°
+                  {station.latDeg.toFixed(1)}°, {station.lonDeg.toFixed(1)}°
                 </span>
               </li>
             ))}
           </ul>
-          <p className="note">
-            Passes are geometric visibility only: no terrain mask, refraction, antenna pattern or
-            link budget. Link quality is derived from peak elevation.
-          </p>
+          <Info label="How passes work">
+            <p>
+              Geometric visibility above a 5° elevation mask. No terrain, refraction or antenna
+              pattern. Link quality rises with peak elevation.
+            </p>
+          </Info>
         </Panel>
       </div>
 
       <section className="reality" id="reality">
-        <h2>What is real, what is modelled</h2>
-        <div className="reality-grid">
-          <div>
-            <h3>
-              <span className="dot-live" aria-hidden="true" /> Real inputs
-            </h3>
-            <ul>
-              <li>CelesTrak GP/OMM elements for NORAD {REFERENCE_NORAD_ID}, fetched live where possible.</li>
-              <li>SGP4 propagation of that orbit for sunlight, eclipse, passes and ground track.</li>
-              <li>NASA DONKI flare, geomagnetic-storm and SEP event records for the weather window.</li>
-              <li>Solar position from the satellite.js ephemeris, used for the eclipse test.</li>
-            </ul>
-          </div>
-          <div>
-            <h3>
-              <span className="dot-model" aria-hidden="true" /> Modelled for play
-            </h3>
-            <ul>
-              <li>Component mass, cost, power, storage and data rates are illustrative, order-of-magnitude values.</li>
-              <li>Scenes are fixed mission-time windows, not real target coordinates.</li>
-              <li>Weather effects are bounded rules (sensor noise, watts, degrees), not physics.</li>
-              <li>Cloud cover and risky-recovery rolls use a seeded PRNG, so runs replay exactly.</li>
-            </ul>
+        <div className="reality-head">
+          <h2>What is real, what is modelled</h2>
+          <div className="segmented" role="tablist" aria-label="Show">
+            {(['real', 'modelled'] as const).map((key) => (
+              <button
+                key={key}
+                role="tab"
+                aria-selected={side === key}
+                className={side === key ? 'is-selected' : ''}
+                onClick={() => {
+                  setSide(key);
+                  setClaim(null);
+                }}
+              >
+                <span className={key === 'real' ? 'dot-live' : 'dot-model'} aria-hidden="true" />
+                {key === 'real' ? 'Real inputs' : 'Modelled for play'}
+              </button>
+            ))}
           </div>
         </div>
+        <div className="claim-chips" role="tabpanel">
+          {claims.map((entry) => (
+            <button
+              key={entry.label}
+              className={`claim claim-${side} ${claim === entry.label ? 'is-open' : ''}`}
+              aria-expanded={claim === entry.label}
+              onClick={() => setClaim((current) => (current === entry.label ? null : entry.label))}
+            >
+              {entry.label}
+            </button>
+          ))}
+        </div>
+        <p className="claim-detail" aria-live="polite">
+          {activeClaim ? activeClaim.detail : 'Tap a chip to see where it comes from.'}
+        </p>
         <details className="assumptions">
           <summary>Model assumptions in full</summary>
           <ul>
@@ -209,10 +260,7 @@ export function Briefing({
       </section>
 
       <section className="callout">
-        <p>
-          Expect three failures during the six-hour window. Each one has at least two recovery
-          paths, and the one you can afford depends on what you launched.
-        </p>
+        <p>Three failures are coming. What you can do about them depends on what you build.</p>
         <button className="btn btn-primary" onClick={onStart}>
           Open the workbench
         </button>

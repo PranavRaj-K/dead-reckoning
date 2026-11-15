@@ -220,3 +220,38 @@ describe('debrief derivation', () => {
     expect(result.status).not.toBe('SUCCESS');
   });
 });
+
+describe('brownout and load shedding', () => {
+  it('clears the brownout once the battery recharges instead of latching to failure', () => {
+    let state = launch();
+    while (!state.inSunlight || state.t < 2_000) state = advanceMission(state, 10);
+    state = { ...state, batteryWh: 0, brownout: true, brownoutSec: 10 };
+    state = advanceMission(state, 100);
+    expect(state.status).toBe('running');
+    expect(state.brownout).toBe(false);
+    expect(state.brownoutSec).toBe(0);
+    expect(state.batteryWh).toBeGreaterThan(0);
+  });
+
+  it('scores a scene whose instrument lost power at minimum quality and logs it once', () => {
+    let state = launch();
+    // Find an imaging window that opens in eclipse, then drain the battery inside it.
+    const index = state.sceneWindows.findIndex((window) => {
+      let probe = state;
+      while (probe.t < window.startSec + 10) probe = advanceMission(probe, 10);
+      return !probe.inSunlight;
+    });
+    expect(index).toBeGreaterThanOrEqual(0);
+    const window = state.sceneWindows[index];
+    while (state.t < window.startSec + 10) state = advanceMission(state, 10);
+    state = advanceMission({ ...state, batteryWh: 0 }, 10);
+    expect(state.scenes[index].shed).toBe(true);
+
+    while (state.t < window.endSec + 10 && state.status === 'running') state = advanceMission(state, 10);
+    expect(state.scenes[index].quality).toBe(0.05);
+    expect(state.scenes[index].note).toContain('lost power');
+    const label = state.scenes[index].label;
+    const logs = state.causal.filter((event) => event.title === 'Instrument shed to protect power' && event.detail.includes(`scene: ${label} `));
+    expect(logs).toHaveLength(1);
+  });
+});

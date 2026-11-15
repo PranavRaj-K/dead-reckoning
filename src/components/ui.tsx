@@ -27,6 +27,19 @@ export function Panel({
   );
 }
 
+/** Detail on demand: the caveat stays one tap away instead of a paragraph on screen. */
+export function Info({ label = 'Details', children }: { label?: string; children: ReactNode }) {
+  return (
+    <details className="info">
+      <summary>
+        <span className="info-dot" aria-hidden="true">i</span>
+        {label}
+      </summary>
+      <div className="info-body">{children}</div>
+    </details>
+  );
+}
+
 export type Tone = 'ok' | 'warn' | 'bad' | 'info' | 'idle';
 
 export function Bar({
