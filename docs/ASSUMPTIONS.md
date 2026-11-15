@@ -177,7 +177,9 @@ science target; anything less, or a lost spacecraft, is `FAILURE`. Grades: **S**
 A ≥ 85, B ≥ 70, C ≥ 55, D ≥ 40, otherwise F. The in-app **Grade S plan** (`src/sim/perfect.ts`) is the
 highest-scoring design, launch and recovery sequence for the default mission and seed (97.4), found by
 simulating every launchable design on every launch that reaches the default orbit against every recovery
-combination; a test replays it.
+combination; a test replays it. Live element sets move the epoch every few hours, which shifts every pass,
+so the plan always flies the bundled Sentinel-2A snapshot it was optimised on and replays exactly. It holds
+an S under the bundled space weather and stays at 96.9 even with an X-class flare, Kp 7 storm and SEP event.
 
 An exhaustive sweep of every launchable design on every objective and orbit (default seed, calm weather)
 found that every pairing is flyable. The best outcomes differ by orbit: precision science reaches S only

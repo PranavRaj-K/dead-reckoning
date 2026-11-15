@@ -12,7 +12,7 @@ import {
   setSceneSkipped,
 } from '../sim/mission';
 import { computeBudgets, validateDesign } from '../sim/resources';
-import { PERFECT_RUN } from '../sim/perfect';
+import { PERFECT_RUN, isPerfectDesign } from '../sim/perfect';
 import { evaluateMission } from '../sim/scoring';
 import { createSatrec, dateAt, estimateSunlight, orbitalPeriodMinutes } from '../sim/orbit';
 import {
@@ -110,7 +110,8 @@ export function useGame() {
 
   /** Sunlight fraction comes from the real propagated orbit, not an assumption. */
   const orbitData = env?.orbits[design.mission.orbit] ?? null;
-  const reference = orbitData?.payload ?? null;
+  // The Grade S plan flies its own fixed element set; everything else flies the loaded one.
+  const reference = isPerfectDesign(design, seed) ? PERFECT_RUN.reference : (orbitData?.payload ?? null);
   const geometry = useMemo(() => {
     const elements = reference;
     if (!elements) return null;

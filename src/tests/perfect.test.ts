@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { PERFECT_RUN, isPerfectDesign, isPerfectRun } from '../sim/perfect';
 import { getRecoveryActions } from '../sim/salvage';
 import { evaluateMission } from '../sim/scoring';
-import { playThrough } from './helpers';
+import { playThrough, reference } from './helpers';
 
 function fly(stepSec: number) {
   return playThrough(PERFECT_RUN.design, PERFECT_RUN.seed, {
@@ -33,6 +33,10 @@ describe('Grade S plan', () => {
       const ids = getRecoveryActions(state, faultId as keyof typeof PERFECT_RUN.flight).map((action) => action.id);
       expect(ids).toContain(step.actionId);
     }
+  });
+
+  it('flies the same bundled element set the plan was optimised on', () => {
+    expect(PERFECT_RUN.reference).toEqual(reference);
   });
 
   it('stops matching once any part or the seed changes', () => {

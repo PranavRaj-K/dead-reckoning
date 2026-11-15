@@ -5,7 +5,9 @@
  * orbit, against every recovery combination. A test replays it to keep the
  * score and grade honest if the model changes.
  */
-import { SCENARIO } from './catalogue';
+import snapshot from '../data/snapshots/celestrak-gp.json';
+import { normalizeGp } from '../data/normalize';
+import { REFERENCE_NORAD_ID, SCENARIO } from './catalogue';
 import type { Design, DesignSlot, FaultId, MissionState } from './types';
 
 /** Same value as DEFAULT_SEED in app/useGame.ts (kept literal to avoid an import cycle). */
@@ -59,8 +61,15 @@ const FLIGHT: Record<FaultId, { actionId: string; label: string; why: string }> 
   },
 };
 
+/**
+ * Live element sets move the epoch every few hours, which shifts every pass. The plan
+ * always flies the bundled snapshot it was optimised on, so it replays exactly.
+ */
+const REFERENCE = normalizeGp((snapshot as { payload: unknown }).payload, REFERENCE_NORAD_ID);
+
 export const PERFECT_RUN = {
   seed: SEED,
+  reference: REFERENCE,
   score: 97.4,
   design: DESIGN,
   parts: PARTS,

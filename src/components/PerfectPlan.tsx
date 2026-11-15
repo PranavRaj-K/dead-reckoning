@@ -36,7 +36,8 @@ export function PerfectPlan() {
       <header>
         <strong>The Grade S plan</strong>
         <span className="dim small">
-          Scores {PERFECT_RUN.score} on seed {PERFECT_RUN.seed}. Tap any choice to see why.
+          Scores {PERFECT_RUN.score} on seed {PERFECT_RUN.seed}, flown on the {PERFECT_RUN.reference.objectName} element set from{' '}
+          {PERFECT_RUN.reference.epochUtc.slice(0, 10)} so it replays exactly. Tap any choice to see why.
         </span>
       </header>
 

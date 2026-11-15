@@ -400,7 +400,6 @@ export interface MissionScenario {
   dataTargetMb: number;
   scenes: SceneWindow[];
   faults: FaultSchedule[];
-  massLimitKg: number;
   costLimitUsd: number;
   stations: Station[];
 }

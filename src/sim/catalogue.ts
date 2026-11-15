@@ -349,8 +349,6 @@ export const DEFAULT_DESIGN: Design = PRESETS[0].design;
 /* Scenario                                                                    */
 /* -------------------------------------------------------------------------- */
 
-/** The rideshare launch's capacity: the default mission's mass limit. */
-export const MASS_LIMIT_KG = 4.5;
 /** Total mission budget, launch included. The default rideshare leaves $110,000 for the spacecraft. */
 export const COST_LIMIT_USD = 140_000;
 export const MISSION_DURATION_SEC = 6 * 3600;
@@ -489,7 +487,6 @@ export const SCENARIO: MissionScenario = {
     { id: 'adcs-degradation', atSec: 11_880 },
     { id: 'battery-degradation', atSec: 16_848 },
   ],
-  massLimitKg: MASS_LIMIT_KG,
   costLimitUsd: COST_LIMIT_USD,
   stations: STATIONS,
 };

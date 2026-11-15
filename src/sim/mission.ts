@@ -701,11 +701,6 @@ export function currentContact(state: MissionState): ContactWindow | null {
   return state.contacts.find((window) => state.t >= window.startSec && state.t < window.endSec) ?? null;
 }
 
-export function nextScene(state: MissionState): SceneRecord | null {
-  const index = state.scenes.findIndex((scene) => scene.status === 'pending');
-  return index >= 0 ? state.scenes[index] : null;
-}
-
 export function batteryUsableWh(state: MissionState): number {
   return round(state.batteryCapacityWh * BATTERY_DOD_LIMIT, 2);
 }

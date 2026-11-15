@@ -33,7 +33,7 @@ Other scripts:
 | --- | --- |
 | `npm run build` | Type-checks (`tsc -b`) then builds to `dist/` |
 | `npm run preview` | Serves the production build locally |
-| `npm test` | Runs the Vitest suite (114 unit tests, no DOM) |
+| `npm test` | Runs the Vitest suite (115 unit tests, no DOM) |
 | `npm run lint` | Runs oxlint |
 
 No environment file is needed. To supply your own keys, copy `.env.example` to `.env.local`.
@@ -177,7 +177,7 @@ hosts only. `npm run preview` serves the build with it, so test there before dep
 
 | File | What it is |
 | --- | --- |
-| [`docs/demo/dead-reckoning-30s.mp4`](docs/demo/dead-reckoning-30s.mp4) | 30-second captioned demo for the submission (meets the 30-second limit) |
+| [`docs/demo/dead-reckoning-30s.mp4`](docs/demo/dead-reckoning-30s.mp4) | 30-second demo with voiceover and English captions (meets the 30-second limit) |
 | [`SUBMISSION.md`](SUBMISSION.md) | Copy-ready project page fields, references and NASA data list |
 | [`docs/ASSUMPTIONS.md`](docs/ASSUMPTIONS.md) | Every constant and mapping rule the model uses |
 

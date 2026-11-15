@@ -71,27 +71,19 @@ screen, each owning part of the spacecraft and making the call when their subsys
 AI coding assistants were used during development. All design decisions, data sources and results were
 reviewed and verified by the team; the simulation is covered by an automated test suite.
 
-## Voiceover for the 30-second demo
+## 30-second demo
 
-Timed to `docs/demo/dead-reckoning-30s.mp4`. About 80 words: speak calmly and land each line inside its
-window. Record in a quiet room, phone held 20 cm away, and save it as `voice.m4a` (or `.wav`).
+`docs/demo/dead-reckoning-30s.mp4` (29 s, 1440×900) has the team's voiceover, cleaned and levelled to
+-16 LUFS, with burned-in English captions that match every spoken line:
 
-| Time | On screen | Say |
-| --- | --- | --- |
-| 0:00–0:04 | Title and 3D spacecraft assembling | "Dead Reckoning. Design a satellite, fly it on a real orbit, and keep it alive when it breaks." |
-| 0:04–0:08 | Mission setup: objective, orbit, launch, team | "Pick a goal, a real orbit like NASA's Landsat 9, a rocket, and up to four teammates." |
-| 0:08–0:13 | Parts swapping on the 3D model | "Every part costs mass, power or money, and bolts onto your spacecraft." |
-| 0:13–0:17 | Earth from NASA GIBS, orbit at 900× | "Then fly it: real orbital mechanics over NASA imagery, with NASA space weather." |
-| 0:17–0:24 | Fault dialogs | "Three failures hit. What you built decides how you can save it." |
-| 0:24–0:30 | Grade S debrief and suggestions | "The debrief shows exactly what to change. Fly again, and earn your S." |
-
-Add the recording to the video (keeps the picture untouched, trims to the video length):
-
-```bash
-ffmpeg -i docs/demo/dead-reckoning-30s.mp4 -i voice.m4a -map 0:v -map 1:a -c:v copy -c:a aac -b:a 160k -shortest dead-reckoning-30s-voice.mp4
-```
-
-The captions are already burned in, which covers the English-subtitle rule.
+| Time | Line |
+| --- | --- |
+| 0:00–0:05 | "This is Dead Reckoning. Design a satellite, fly it on a real orbit, and keep it alive when it breaks." |
+| 0:06–0:10 | "Pick a goal, a real orbit like NASA's Landsat 9, a rocket, and up to four teammates." |
+| 0:11–0:15 | "Every part costs mass, power or money, and bolts onto your spacecraft." |
+| 0:15–0:20 | "Then fly it: real orbital mechanics over NASA imagery, with NASA space weather." |
+| 0:21–0:24 | "Three failures hit. What you built decides how you can save it." |
+| 0:24–0:28 | "The debrief shows exactly what to change. Fly again, and earn your S rank." |
 
 ## Live pitch for local judging (60 seconds)
 
@@ -120,5 +112,5 @@ Use this if judges ask you to present. Open the live site on the Brief screen be
   the gamble it takes.
 - **"How would a classroom use it?"** One screen per team of four, each student owning a subsystem and
   its failure. Same seed for every team, so results are directly comparable in the debrief table.
-- **"How do you know the simulation is right?"** 114 automated tests: deterministic replays, budget rules,
+- **"How do you know the simulation is right?"** 115 automated tests: deterministic replays, budget rules,
   fault recovery, data validation, and the Grade S plan replayed at three clock speeds.
