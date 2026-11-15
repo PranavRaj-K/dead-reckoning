@@ -14,6 +14,8 @@ propagated with **SGP4** from the real CelesTrak element set of **SENTINEL-2A (N
 - Runs fully offline from bundled snapshots.
 - Deterministic: the same seed and the same data always reproduce the same run.
 
+**Play it:** https://ronaksarda.github.io/dead-reckoning/ · **30-second demo:** [`docs/demo/dead-reckoning-30s.mp4`](docs/demo/dead-reckoning-30s.mp4) · **Submission kit:** [`SUBMISSION.md`](SUBMISSION.md)
+
 ---
 
 ## Quick start
@@ -31,7 +33,7 @@ Other scripts:
 | --- | --- |
 | `npm run build` | Type-checks (`tsc -b`) then builds to `dist/` |
 | `npm run preview` | Serves the production build locally |
-| `npm test` | Runs the Vitest suite (108 unit tests, no DOM) |
+| `npm test` | Runs the Vitest suite (114 unit tests, no DOM) |
 | `npm run lint` | Runs oxlint |
 
 No environment file is needed. To supply your own keys, copy `.env.example` to `.env.local`.
@@ -175,6 +177,8 @@ hosts only. `npm run preview` serves the build with it, so test there before dep
 
 | File | What it is |
 | --- | --- |
+| [`docs/demo/dead-reckoning-30s.mp4`](docs/demo/dead-reckoning-30s.mp4) | 30-second captioned demo for the submission (meets the 30-second limit) |
+| [`SUBMISSION.md`](SUBMISSION.md) | Copy-ready project page fields, references and NASA data list |
 | [`docs/demo/dead-reckoning-demo.mp4`](docs/demo/dead-reckoning-demo.mp4) | 2-minute captioned demo recorded from the production build: 3D assembly, the Grade S plan, all three faults with coaching, the S debrief |
 | [`DEMO_SCRIPT.md`](DEMO_SCRIPT.md) | 90-second recording script, timed shot by shot |
 | [`SLIDES.md`](SLIDES.md) | Slide-by-slide outline with speaker notes |
